@@ -20,22 +20,21 @@ model User {
 }
 
 model Yacht {
-  id          String   @id @default(cuid())
-  yachtNumber String   @unique
-  name        String
-  yearBuilt   Int
-  ownerId     String
+  hullNumber String   @id
+  name       String
+  yearBuilt  Int
+  ownerId    String
   captainName String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   claims Claim[]
 }
 
 model Claim {
   id               String    @id @default(cuid())
-  yachtId          String
-  yacht            Yacht     @relation(fields: [yachtId], references: [id])
+  yachtHullNumber  String
+  yacht            Yacht     @relation(fields: [yachtHullNumber], references: [hullNumber])
   title            String
   description      String
   status           String    @default("new")

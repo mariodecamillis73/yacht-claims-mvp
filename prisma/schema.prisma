@@ -37,24 +37,30 @@ model Yacht {
 }
 
 model Claim {
-  id              String       @id @default(cuid())
-  yachtId         String
-  yacht           Yacht        @relation(fields: [yachtId], references: [id])
-  title           String
-  description     String
-  status          String
-  priority        String
-  assignedTo      String?
-  createdBy       String?
-  warrantyStatus  String?
-  supplierId      String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  closedAt        DateTime?
-  comments        Comment[]
-  documents       Document[]
-  activity        ActivityLog[]
-  accessTokens    ClaimAccessToken[]
+  id               String       @id @default(cuid())
+  yachtId          String
+  yacht            Yacht        @relation(fields: [yachtId], references: [id])
+  title            String
+  description      String
+  status           String       @default("new")
+  priority         String       @default("medium")
+  assignedTo       String?
+  createdBy        String?
+  warrantyStatus   String?
+  supplierId       String?
+  validationStatus String       @default("pending")
+  validatedBy      String?
+  validatedAt      DateTime?
+  rejectedReason   String?
+  rejectedBy       String?
+  rejectedAt       DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  closedAt         DateTime?
+  comments         Comment[]
+  documents        Document[]
+  activity         ActivityLog[]
+  accessTokens     ClaimAccessToken[]
 }
 
 model Comment {
@@ -110,28 +116,28 @@ model ClaimAccessToken {
 }
 
 model YachtTechnicalSection {
-  id         String               @id @default(cuid())
-  yachtId    String
-  yacht      Yacht                @relation(fields: [yachtId], references: [id])
+  id          String               @id @default(cuid())
+  yachtId     String
+  yacht       Yacht                @relation(fields: [yachtId], references: [id])
   sectionName String
   displayName String
-  sortOrder  Int
-  createdAt  DateTime             @default(now())
-  fields     YachtTechnicalField[]
+  sortOrder   Int
+  createdAt   DateTime             @default(now())
+  fields      YachtTechnicalField[]
 }
 
 model YachtTechnicalField {
-  id         String                 @id @default(cuid())
-  sectionId  String
-  section    YachtTechnicalSection @relation(fields: [sectionId], references: [id])
-  fieldName  String
+  id          String                 @id @default(cuid())
+  sectionId   String
+  section     YachtTechnicalSection @relation(fields: [sectionId], references: [id])
+  fieldName   String
   displayName String
-  fieldType  String
-  value      String?
-  unit       String?
-  isCustom   Boolean @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  fieldType   String
+  value       String?
+  unit        String?
+  isCustom    Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Permission {

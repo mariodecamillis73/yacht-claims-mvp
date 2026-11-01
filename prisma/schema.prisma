@@ -20,47 +20,44 @@ model User {
 }
 
 model Yacht {
-  id                  String              @id @default(cuid())
-  yachtNumber         String              @unique
-  name                String
-  registrationNumber  String
-  model               String
-  builder             String
-  yearBuilt           Int
-  ownerId             String
-  captainName         String
-  status              String
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  claims              Claim[]
-  technicalSections   YachtTechnicalSection[]
+  id          String   @id @default(cuid())
+  yachtNumber String   @unique
+  name        String
+  yearBuilt   Int
+  ownerId     String
+  captainName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  claims Claim[]
 }
 
 model Claim {
-  id               String       @id @default(cuid())
+  id               String    @id @default(cuid())
   yachtId          String
-  yacht            Yacht        @relation(fields: [yachtId], references: [id])
+  yacht            Yacht     @relation(fields: [yachtId], references: [id])
   title            String
   description      String
-  status           String       @default("new")
-  priority         String       @default("medium")
+  status           String    @default("new")
+  priority         String    @default("medium")
   assignedTo       String?
   createdBy        String?
-  warrantyStatus   String?
   supplierId       String?
-  validationStatus String       @default("pending")
+  warrantyStatus   String?
+  validationStatus String    @default("pending")
   validatedBy      String?
   validatedAt      DateTime?
   rejectedReason   String?
   rejectedBy       String?
   rejectedAt       DateTime?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
   closedAt         DateTime?
-  comments         Comment[]
-  documents        Document[]
-  activity         ActivityLog[]
-  accessTokens     ClaimAccessToken[]
+
+  comments     Comment[]
+  documents    Document[]
+  activity     ActivityLog[]
+  accessTokens ClaimAccessToken[]
 }
 
 model Comment {
@@ -81,7 +78,8 @@ model Document {
   mimeType    String
   uploadedBy  String
   createdAt   DateTime @default(now())
-  claim       Claim?   @relation(fields: [claimId], references: [id])
+
+  claim Claim? @relation(fields: [claimId], references: [id])
 }
 
 model ActivityLog {
@@ -112,32 +110,8 @@ model ClaimAccessToken {
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime @default(now())
-  claim     Claim    @relation(fields: [claimId], references: [id])
-}
 
-model YachtTechnicalSection {
-  id          String               @id @default(cuid())
-  yachtId     String
-  yacht       Yacht                @relation(fields: [yachtId], references: [id])
-  sectionName String
-  displayName String
-  sortOrder   Int
-  createdAt   DateTime             @default(now())
-  fields      YachtTechnicalField[]
-}
-
-model YachtTechnicalField {
-  id          String                 @id @default(cuid())
-  sectionId   String
-  section     YachtTechnicalSection @relation(fields: [sectionId], references: [id])
-  fieldName   String
-  displayName String
-  fieldType   String
-  value       String?
-  unit        String?
-  isCustom    Boolean @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  claim Claim @relation(fields: [claimId], references: [id])
 }
 
 model Permission {

@@ -68,8 +68,8 @@ export async function POST(request: Request) {
     const parsed = z
       .object({
         yachtHullNumber: z.string().min(1),
-        title: z.string().min(1).max(250),
-        description: z.string().min(1).max(20000),
+        title: z.string().trim().min(1).max(250),
+        description: z.string().trim().min(1).max(20000),
         priority: z
           .enum(["low", "medium", "high", "critical"])
           .default("medium"),
@@ -78,8 +78,27 @@ export async function POST(request: Request) {
     if (!parsed.success) throw new HttpError(400, "Invalid claim fields");
     if (!(await yachtAllowed(u.id, u.role, parsed.data.yachtHullNumber)))
       throw new HttpError(404, "Yacht not found");
-    const c = await db.claim.create({
-      data: { ...parsed.data, createdBy: u.id },
+    if (
+      !(await db.yacht.findUnique({
+        where: { hullNumber: parsed.data.yachtHullNumber },
+      }))
+    )
+      throw new HttpError(404, "Yacht not found");
+    const c = await db.$transaction(async (tx) => {
+      const claim = await tx.claim.create({
+        data: { ...parsed.data, createdBy: u.id },
+      });
+      await tx.activityLog.create({
+        data: {
+          entityType: "claim",
+          entityId: claim.id,
+          claimId: claim.id,
+          actorId: u.id,
+          action: "created",
+          details: "Claim submitted for director validation",
+        },
+      });
+      return claim;
     });
     return NextResponse.json(c, { status: 201 });
   } catch (e) {

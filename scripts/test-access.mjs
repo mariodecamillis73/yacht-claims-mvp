@@ -225,21 +225,43 @@ try {
     201,
   );
   for (const [candidate, expected] of [
-    ['abcd12@',400],
-    ['abcdefgh1',400],
-    ['abcdefgh@',400],
-    ['1234567@',400],
-    ['abc12345 ',400],
-    ['a'.repeat(71)+'1@',400],
-    ['abcd123@',201],
-    ['lowercase9#',201],
-    ['letters9 @',201],
+    ["abcd12@", 400],
+    ["abcdefgh1", 400],
+    ["abcdefgh@", 400],
+    ["1234567@", 400],
+    ["abc12345 ", 400],
+    ["a".repeat(71) + "1@", 400],
+    ["abcd123@", 201],
+    ["lowercase9#", 201],
+    ["letters9 @", 201],
   ]) {
     const email = `policy-${Math.random().toString(36).slice(2)}@example.invalid`;
-    const result = await req('/api/users',{cookie:cookies.director,method:'POST',body:{email,password:candidate,firstName:'Policy',lastName:'Test',role:'staff'}});
-    assert.equal(result.status,expected,`Password policy case must return ${expected}`);
-    if(expected===201){
-      assert.equal((await req('/api/auth/login',{method:'POST',body:{email,password:candidate}})).status,200);
+    const result = await req("/api/users", {
+      cookie: cookies.director,
+      method: "POST",
+      body: {
+        email,
+        password: candidate,
+        firstName: "Policy",
+        lastName: "Test",
+        role: "staff",
+      },
+    });
+    assert.equal(
+      result.status,
+      expected,
+      `Password policy case must return ${expected}`,
+    );
+    if (expected === 201) {
+      assert.equal(
+        (
+          await req("/api/auth/login", {
+            method: "POST",
+            body: { email, password: candidate },
+          })
+        ).status,
+        200,
+      );
     }
   }
   const newLogin = await req("/api/auth/login", {
@@ -541,6 +563,108 @@ try {
   assert.equal(
     (await req("/api/claims/A2", { cookie: cookies.dealer })).status,
     404,
+  );
+  const yacht = await req("/api/yachts", {
+    cookie: cookies.staff,
+    method: "POST",
+    body: { hullNumber: "flow", name: "Workflow test", yearBuilt: 2026 },
+  });
+  assert.equal(yacht.status, 201);
+  assert.equal(
+    (
+      await req("/api/yachts", {
+        cookie: cookies.staff,
+        method: "POST",
+        body: { hullNumber: "flow", name: "Duplicate", yearBuilt: 2026 },
+      })
+    ).status,
+    409,
+  );
+  const draft = await req("/api/claims", {
+    cookie: cookies.staff,
+    method: "POST",
+    body: {
+      yachtHullNumber: "FLOW",
+      title: "Workflow claim",
+      description: "Test description",
+      priority: "medium",
+    },
+  });
+  assert.equal(draft.status, 201, JSON.stringify(draft.data));
+  const flowId = draft.data.id;
+  assert.ok(flowId);
+  assert.equal(
+    (
+      await req(`/api/claims/${flowId}`, {
+        cookie: cookies.staff,
+        method: "PATCH",
+        body: { status: "closed" },
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await req(`/api/claims/${flowId}/validate`, {
+        cookie: cookies.director,
+        method: "POST",
+        body: { decision: "approved" },
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await req(`/api/claims/${flowId}/validate`, {
+        cookie: cookies.director,
+        method: "POST",
+        body: { decision: "approved" },
+      })
+    ).status,
+    409,
+  );
+  for (const status of ["in_progress", "supplier_pending", "closed"]) {
+    assert.equal(
+      (
+        await req(`/api/claims/${flowId}`, {
+          cookie: cookies.staff,
+          method: "PATCH",
+          body: { status },
+        })
+      ).status,
+      200,
+    );
+  }
+  const closed = await req(`/api/claims/${flowId}`, { cookie: cookies.staff });
+  assert.ok(closed.data.claim.closedAt);
+  assert.equal(
+    closed.data.activity.filter((x) => x.action === "status_changed").length,
+    3,
+  );
+  assert.equal(
+    (
+      await req(`/api/claims/${flowId}`, {
+        cookie: cookies.staff,
+        method: "PATCH",
+        body: { status: "assigned" },
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await req(`/api/claims/${flowId}`, {
+        cookie: cookies.staff,
+        method: "PATCH",
+        body: { status: "in_progress" },
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (await req(`/api/claims/${flowId}`, { cookie: cookies.staff })).data.claim
+      .closedAt,
+    null,
   );
   await db.user.update({ where: { id: "staff" }, data: { isActive: false } });
   assert.equal(

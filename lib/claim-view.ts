@@ -11,12 +11,14 @@ export async function claimView(id: string, isInternal: boolean) {
       priority: true,
       createdAt: true,
       updatedAt: true,
+      closedAt: true,
       ...(isInternal
         ? {
             warrantyStatus: true,
             validationStatus: true,
             assignedTo: true,
             validatedBy: true,
+            rejectedReason: true,
           }
         : {}),
     },
@@ -36,7 +38,15 @@ export async function claimView(id: string, isInternal: boolean) {
     },
     orderBy: { createdAt: "asc" },
   });
+  const activity = isInternal
+    ? await db.activityLog.findMany({
+        where: { claimId: id },
+        select: { id: true, action: true, details: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
+      })
+    : [];
   return {
+    activity,
     claim,
     comments,
     documents,

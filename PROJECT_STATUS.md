@@ -143,3 +143,7 @@ Original uploaded ZIP and database preserved separately; database and environmen
 Validation: production build and TypeScript passed; HTTP checks confirmed database claim list/detail, yacht detail, invalid decision (400), missing claim (404), Work Hub/login (200), root redirect (307). Browser visual verification remains pending.
 
 Limitations: authentication/authorization remain prototype-only; supplier portal and My Yacht still use demo sources. Action buttons and workflow enforcement require further work. This recovery does not make the application production-ready. Existing Next.js dependency needs a separate security update.
+
+## 2026-11-02 — Yacht registration and claim workflow
+
+Added yacht registration/list, claim submission with protected attachments and retry without duplicate claims, and approval-gated status changes with internal history. Director validation is single-use; closing and reopening set/clear the closure date. Verified production build, access integration tests (including creation, duplicate hulls, validation gates and status transitions), and hosted persistence/authentication tests on disposable databases.

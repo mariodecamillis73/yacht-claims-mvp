@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import ClaimActions from "@/components/claim-actions";
+import { STATUS_LABELS } from "@/lib/claim-workflow";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
@@ -45,10 +46,14 @@ export default function ClaimPage() {
             <div>
               <h2>{data.claim.title}</h2>
               <div className="muted">
-                {data.claim.id} • {data.claim.status}
+                {data.claim.id} •{" "}
+                {STATUS_LABELS[data.claim.status] || data.claim.status}
               </div>
             </div>
-            <div className="claim-header-actions">
+            <div
+              className="claim-header-actions"
+              hidden={!data.previousClaimId && !data.nextClaimId}
+            >
               <Link
                 href={
                   data.previousClaimId ? `/claims/${data.previousClaimId}` : "#"
@@ -77,7 +82,7 @@ export default function ClaimPage() {
             </div>
             <div className="summary-card">
               <span className="muted">Warranty</span>
-              <strong>{data.claim.warrantyStatus}</strong>
+              <strong>{data.claim.warrantyStatus || "—"}</strong>
             </div>
           </div>
         </div>
@@ -85,7 +90,24 @@ export default function ClaimPage() {
         <div className="layout-grid">
           <div className="section">
             <h3>Description</h3>
-            <p>{data.claim.description}</p>
+            <p style={{ whiteSpace: "pre-wrap" }}>{data.claim.description}</p>
+            {data.claim.closedAt && (
+              <p>Closed: {new Date(data.claim.closedAt).toLocaleString()}</p>
+            )}
+            {data.claim.rejectedReason && (
+              <p>Rejection reason: {data.claim.rejectedReason}</p>
+            )}
+            {!!data.activity?.length && (
+              <section>
+                <h3>Internal history</h3>
+                {data.activity.map((entry: any) => (
+                  <p key={entry.id}>
+                    <small>{new Date(entry.createdAt).toLocaleString()}</small>{" "}
+                    · {entry.details}
+                  </p>
+                ))}
+              </section>
+            )}
 
             <div style={{ marginTop: 18 }}>
               <h3>Comments</h3>
@@ -106,6 +128,7 @@ export default function ClaimPage() {
           <div className="section">
             <ClaimActions
               id={params.id}
+              claim={data.claim}
               onChange={() => {
                 fetch(`/api/claims/${params.id}`)
                   .then((r) => {

@@ -21,8 +21,8 @@ export async function POST(
       throw new HttpError(400, "Rejection reason required");
     const rejected = b.decision === "rejected";
     const c = await db.$transaction(async (tx) => {
-      const c = await tx.claim.update({
-        where: { id: params.id },
+      const changed = await tx.claim.updateMany({
+        where: { id: params.id, validationStatus: "pending" },
         data: {
           validationStatus: b.decision,
           validatedBy: a.actor.id,
@@ -34,6 +34,12 @@ export async function POST(
           closedAt: rejected ? new Date() : null,
         },
       });
+      if (!changed.count)
+        throw new HttpError(
+          409,
+          "Claim has already been validated. Refresh the page",
+        );
+      const c = await tx.claim.findUniqueOrThrow({ where: { id: params.id } });
       await tx.activityLog.create({
         data: {
           entityType: "claim",

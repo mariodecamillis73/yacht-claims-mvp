@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { STATUS_LABELS } from "@/lib/claim-workflow";
 
 type Claim = {
   id: string;
@@ -112,7 +113,10 @@ export default function HomePage() {
         >
           <a href="/workhub">Work Hub</a>
           {role === "director" && <a href="/users">Users</a>}
-          <a href="/my-yacht">My Yacht</a>
+          {["director", "staff", "representative"].includes(role) && (
+            <a href="/yachts">Yachts</a>
+          )}
+          {role === "representative" && <a href="/my-yacht">My Yacht</a>}
         </nav>
 
         <button
@@ -176,6 +180,16 @@ export default function HomePage() {
             </h1>
 
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              {["director", "staff", "representative"].includes(role) && (
+                <a className="button" href="/claims/new">
+                  New claim
+                </a>
+              )}
+              {["director", "staff"].includes(role) && (
+                <a className="button secondary" href="/yachts">
+                  New yacht / Yacht list
+                </a>
+              )}
               <span
                 style={{
                   background: "#dfeaf8",
@@ -248,7 +262,9 @@ export default function HomePage() {
                       color: "#1f2a37",
                     }}
                   >
-                    {items[0]?.yacht?.name || hullNumber}
+                    <a href={`/yachts/${encodeURIComponent(hullNumber)}`}>
+                      {items[0]?.yacht?.name || hullNumber}
+                    </a>
                     <div
                       style={{
                         fontSize: 15,
@@ -270,7 +286,11 @@ export default function HomePage() {
                       fontSize: 16,
                     }}
                   >
-                    {items[0]?.status === "closed" ? "Closed" : "Open"}
+                    {items.every((c) =>
+                      ["closed", "rejected"].includes(c.status),
+                    )
+                      ? "Closed"
+                      : "Open"}
                   </span>
                 </div>
 
@@ -328,9 +348,7 @@ export default function HomePage() {
                             fontSize: 12,
                           }}
                         >
-                          {claim.status === "supplier_pending"
-                            ? "supplier_pending"
-                            : claim.status}
+                          {STATUS_LABELS[claim.status] || claim.status}
                         </span>
 
                         <span
@@ -355,7 +373,9 @@ export default function HomePage() {
                             fontSize: 12,
                           }}
                         >
-                          {claim.validatedBy ?? "Pending validation"}
+                          {claim.validationStatus
+                            ? `Validation: ${claim.validationStatus}`
+                            : ""}
                         </span>
 
                         {claim.createdAt ? (

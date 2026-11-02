@@ -1,10 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
+import { nextStatuses, STATUS_LABELS } from "@/lib/claim-workflow";
 export default function ClaimActions({
   id,
   onChange,
+  claim,
 }: {
   id: string;
+  claim: { status: string; validationStatus?: string };
   onChange: () => void;
 }) {
   const [role, setRole] = useState("");
@@ -18,6 +21,11 @@ export default function ClaimActions({
   const [message, setMessage] = useState("");
   const [visibility, setVisibility] = useState("shared");
   const [reason, setReason] = useState("");
+  const [nextStatus, setNextStatus] = useState("");
+  const options = nextStatuses(claim.status, claim.validationStatus || "");
+  useEffect(() => {
+    setNextStatus("");
+  }, [claim.status, claim.validationStatus]);
   const base = `/api/claims/${id}`;
   const inside = ["director", "staff"].includes(role);
   async function loadShares() {
@@ -58,6 +66,53 @@ export default function ClaimActions({
     <section>
       <h3>Actions</h3>
       {error && <p role="alert">{error}</p>}
+      {inside && (
+        <section className="workflow-actions">
+          <h3>Claim workflow</h3>
+          <p>
+            Current status:{" "}
+            <strong>{STATUS_LABELS[claim.status] || claim.status}</strong> ·
+            Validation: {claim.validationStatus}
+          </p>
+          {claim.validationStatus !== "approved" ? (
+            <p>
+              Director approval is required before this claim can advance or
+              close.
+            </p>
+          ) : (
+            <>
+              <label>
+                Next status
+                <select
+                  className="input"
+                  value={nextStatus}
+                  disabled={busy}
+                  onChange={(e) => setNextStatus(e.target.value)}
+                >
+                  <option value="">Select next status</option>
+                  {options.map((status) => (
+                    <option key={status} value={status}>
+                      {STATUS_LABELS[status]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="button"
+                disabled={busy || !nextStatus}
+                onClick={() =>
+                  run(async () => {
+                    await json(base, "PATCH", { status: nextStatus });
+                  })
+                }
+              >
+                {claim.status === "closed" ? "Reopen claim" : "Update status"}
+              </button>
+            </>
+          )}
+        </section>
+      )}
+
       <label>
         Comment
         <textarea
@@ -128,7 +183,7 @@ export default function ClaimActions({
           </label>
           <button
             className="button"
-            disabled={busy}
+            disabled={busy || claim.validationStatus !== "pending"}
             onClick={() =>
               run(async () => {
                 await json(base + "/validate", "POST", {
@@ -141,7 +196,9 @@ export default function ClaimActions({
           </button>{" "}
           <button
             className="button secondary"
-            disabled={busy || !reason.trim()}
+            disabled={
+              busy || !reason.trim() || claim.validationStatus !== "pending"
+            }
             onClick={() =>
               run(async () => {
                 await json(base + "/validate", "POST", {

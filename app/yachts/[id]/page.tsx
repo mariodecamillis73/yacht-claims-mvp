@@ -43,12 +43,16 @@ export default function YachtOverviewPage() {
             <div>
               <h2>{data.name}</h2>
               <div className="muted">
-                {data.yachtNumber} • {data.registrationNumber}
+                {data.yachtNumber} · {data.yearBuilt}
               </div>
             </div>
             <div className="claim-header-actions">
-              <button className="button secondary">New claim</button>
-              <button className="button">Add document</button>
+              <Link
+                className="button"
+                href={`/claims/new?yacht=${encodeURIComponent(data.hullNumber)}`}
+              >
+                New claim
+              </Link>
             </div>
           </div>
 
@@ -56,7 +60,11 @@ export default function YachtOverviewPage() {
             <div className="summary-card">
               <span className="muted">Open claims</span>
               <strong>
-                {data.claims.filter((c: any) => c.status !== "closed").length}
+                {
+                  data.claims.filter(
+                    (c: any) => !["closed", "rejected"].includes(c.status),
+                  ).length
+                }
               </strong>
             </div>
             <div className="summary-card">
@@ -84,37 +92,17 @@ export default function YachtOverviewPage() {
 
         <div className="layout-grid">
           <div className="section">
-            <h3>Technical profile</h3>
-            {data.technicalProfile.map((section: any) => (
-              <div key={section.sectionName} style={{ marginTop: 18 }}>
-                <div className="section-header">
-                  <strong>{section.displayName}</strong>
-                  <button className="button secondary">+ New field</button>
-                </div>
-                <table className="mini-table">
-                  <thead>
-                    <tr>
-                      <th>Field</th>
-                      <th>Value</th>
-                      <th>Unit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {section.fields.map((field: any) => (
-                      <tr key={field.id}>
-                        <td>{field.displayName}</td>
-                        <td>{field.value}</td>
-                        <td>{field.unit || "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))}
+            <h3>Yacht details</h3>
+            <p>Hull number: {data.hullNumber}</p>
+            <p>Year built: {data.yearBuilt}</p>
+            <p>Captain: {data.captainName || "Not specified"}</p>
+            <p>Owner / company: {data.ownerId || "Not specified"}</p>
+            <p>Photos and documents can be added to each claim.</p>
           </div>
 
           <div className="section">
             <h3>Claims</h3>
+            {data.claims.length === 0 && <p>No claims yet.</p>}
             <div className="grid" style={{ gap: 12 }}>
               {data.claims.map((claim: any) => (
                 <Link

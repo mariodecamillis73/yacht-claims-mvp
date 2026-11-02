@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { claimAccess, mutation, HttpError, fail } from "@/lib/auth";
 import { claimView } from "@/lib/claim-view";
 import { z } from "zod";
+import { nextStatuses, STATUS_LABELS } from "@/lib/claim-workflow";
 export const dynamic = "force-dynamic";
 export async function GET(
   request: Request,
@@ -44,14 +45,46 @@ export async function PATCH(
     if (!p.success) throw new HttpError(400, "Invalid update");
     if (p.data.status && a.claim.validationStatus !== "approved")
       throw new HttpError(409, "Director approval required");
-    const c = await db.claim.update({
-      where: { id: params.id },
-      data: {
-        ...p.data,
-        ...(p.data.status
-          ? { closedAt: p.data.status === "closed" ? new Date() : null }
-          : {}),
-      },
+    if (
+      p.data.status &&
+      !nextStatuses(a.claim.status, a.claim.validationStatus).includes(
+        p.data.status,
+      )
+    )
+      throw new HttpError(409, "This status change is not allowed");
+    const c = await db.$transaction(async (tx) => {
+      const changed = await tx.claim.updateMany({
+        where: {
+          id: params.id,
+          updatedAt: a.claim.updatedAt,
+          validationStatus: a.claim.validationStatus,
+          status: a.claim.status,
+        },
+        data: {
+          ...p.data,
+          ...(p.data.status
+            ? { closedAt: p.data.status === "closed" ? new Date() : null }
+            : {}),
+        },
+      });
+      if (!changed.count)
+        throw new HttpError(409, "The claim changed. Refresh and try again");
+      const claim = await tx.claim.findUniqueOrThrow({
+        where: { id: params.id },
+      });
+      await tx.activityLog.create({
+        data: {
+          entityType: "claim",
+          entityId: params.id,
+          claimId: params.id,
+          actorId: a.actor.id,
+          action: p.data.status ? "status_changed" : "updated",
+          details: p.data.status
+            ? `${STATUS_LABELS[a.claim.status] || a.claim.status} → ${STATUS_LABELS[p.data.status]}`
+            : "Claim details updated",
+        },
+      });
+      return claim;
     });
     return NextResponse.json(c);
   } catch (e) {

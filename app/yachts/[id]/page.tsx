@@ -8,9 +8,14 @@ import { EQUIPMENT, PAINTING } from "@/lib/yacht-profile";
 export default function YachtOverviewPage() {
   const params = useParams<{ id: string }>();
   const [data, setData] = useState<any>(null);
+  const [role, setRole] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((u) => setRole(u?.role || ""))
+      .catch(() => {});
     fetch(`/api/yachts/${params.id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Unable to load yacht");
@@ -48,6 +53,14 @@ export default function YachtOverviewPage() {
               </div>
             </div>
             <div className="claim-header-actions">
+              {role === "director" && (
+                <Link
+                  className="button secondary"
+                  href={`/yachts/${encodeURIComponent(data.hullNumber)}/edit`}
+                >
+                  Edit yacht
+                </Link>
+              )}
               <Link
                 className="button"
                 href={`/claims/new?yacht=${encodeURIComponent(data.hullNumber)}`}

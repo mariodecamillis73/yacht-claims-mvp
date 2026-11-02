@@ -688,6 +688,103 @@ try {
   assert.equal(draft.status, 201, JSON.stringify(draft.data));
   const flowId = draft.data.id;
   assert.ok(flowId);
+  const editBody = {
+    hullNumber: "FLOW",
+    name: "Updated yacht",
+    yearBuilt: 2025,
+    ownerId: "New owner",
+    captainName: "New captain",
+    deliveryDate: "2026-12-01",
+    warrantyYears: 1,
+    technicalProfile: yacht.data.technicalProfile,
+    updatedAt: yacht.data.updatedAt,
+  };
+  for (const role of ["staff", "supplier", "representative", "dealer"])
+    assert.equal(
+      (
+        await req("/api/yachts/FLOW", {
+          cookie: cookies[role],
+          method: "PATCH",
+          body: editBody,
+        })
+      ).status,
+      403,
+    );
+  assert.equal(
+    (
+      await req("/api/yachts/FLOW", {
+        cookie: cookies.director,
+        method: "PATCH",
+        body: { ...editBody, warrantyYears: 3 },
+      })
+    ).status,
+    400,
+  );
+  const updated = await req("/api/yachts/FLOW", {
+    cookie: cookies.director,
+    method: "PATCH",
+    body: editBody,
+  });
+  assert.equal(updated.status, 200, JSON.stringify(updated.data));
+  assert.equal(updated.data.name, "Updated yacht");
+  assert.equal(updated.data.warrantyExpiresAt, "2027-12-01T00:00:00.000Z");
+  assert.deepEqual(updated.data.technicalProfile, yacht.data.technicalProfile);
+  assert.equal(
+    (
+      await req("/api/yachts/FLOW", {
+        cookie: cookies.director,
+        method: "PATCH",
+        body: editBody,
+      })
+    ).status,
+    409,
+  );
+  await db.yachtMember.create({
+    data: { userId: "representative", hullNumber: "FLOW" },
+  });
+  const collision = await req("/api/yachts/FLOW", {
+    cookie: cookies.director,
+    method: "PATCH",
+    body: { ...editBody, updatedAt: updated.data.updatedAt, hullNumber: "A" },
+  });
+  assert.equal(collision.status, 409);
+  const renamed = await req("/api/yachts/FLOW", {
+    cookie: cookies.director,
+    method: "PATCH",
+    body: {
+      ...editBody,
+      updatedAt: updated.data.updatedAt,
+      hullNumber: "FLOW2",
+      deliveryDate: undefined,
+      warrantyYears: undefined,
+    },
+  });
+  assert.equal(renamed.status, 200, JSON.stringify(renamed.data));
+  assert.equal(renamed.data.deliveryDate, null);
+  assert.equal(renamed.data.warrantyExpiresAt, null);
+  assert.equal(
+    (await db.claim.findUnique({ where: { id: flowId } })).yachtHullNumber,
+    "FLOW2",
+  );
+  assert.equal(
+    (await req("/api/yachts/FLOW2", { cookie: cookies.representative })).status,
+    200,
+  );
+  assert.equal(
+    (await req("/api/yachts/FLOW", { cookie: cookies.director })).status,
+    404,
+  );
+  assert.ok(
+    await db.activityLog.findFirst({
+      where: {
+        entityType: "yacht",
+        entityId: "FLOW2",
+        action: "updated",
+        actorId: "director",
+      },
+    }),
+  );
+
   assert.equal(
     (
       await req(`/api/claims/${flowId}`, {

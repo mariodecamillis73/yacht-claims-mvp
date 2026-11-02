@@ -1,3 +1,9 @@
+## Administrator yacht editing — 2 November 2026
+
+Director can edit every yacht registration field through Edit yacht on its detail screen, including hull number, delivery/warranty and equipment/paint data. Shared create/edit form and server validation; server checks director role and original updatedAt to reject stale saves. Hull corrections preserve claims via FK cascade and update membership/document/audit references in the same transaction. Successful edits are logged. Build, access integration (permissions, edits, expiry recalculation/clearing, stale conflicts, duplicate hull rollback and preserved claim/member links) and hosted tests passed.
+
+---
+
 ## Yacht delivery, warranty and technical profile — 2 November 2026
 
 New yacht registration includes delivery date and 1/2-year warranty with calendar expiry calculated on the server. Technical data covers engine, genset, bow/stern thrusters, propellers, air conditioning and watermaker, plus separate hull/deck paint brand, type and color code. Data is persisted and shown on yacht details. Additive migration preserves existing yachts with blank dates/profile. Build, access/profile integration (including leap day and invalid dates/durations), hosted tests and old-schema migration preservation passed. SMTP and full authenticated browser/mobile QA remain pending.

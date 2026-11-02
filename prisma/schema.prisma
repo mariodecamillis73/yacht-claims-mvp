@@ -14,6 +14,7 @@ model User {
   firstName    String
   lastName     String
   role         String
+  isActive     Boolean @default(true)
   language     String   @default("en")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -64,6 +65,7 @@ model Comment {
   claimId   String
   claim     Claim    @relation(fields: [claimId], references: [id])
   userId    String
+  visibility String @default("internal")
   message   String
   createdAt DateTime @default(now())
 }
@@ -73,6 +75,8 @@ model Document {
   yachtId     String?
   claimId     String?
   fileName    String
+  content     Bytes?
+  visibility  String @default("internal")
   storagePath String
   mimeType    String
   uploadedBy  String
@@ -119,4 +123,33 @@ model Permission {
   resource  String
   action    String
   createdAt DateTime @default(now())
+}
+
+model YachtMember {
+  id String @id @default(cuid())
+  userId String
+  hullNumber String
+  @@unique([userId, hullNumber])
+}
+
+model ClaimGrant {
+  id String @id @default(cuid())
+  claimId String
+  email String
+  role String
+  tokenHash String @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdBy String
+  createdAt DateTime @default(now())
+  codeHash String?
+  codeExpiresAt DateTime?
+  codeSentAt DateTime?
+  attempts Int @default(0)
+}
+
+model LoginAttempt {
+  email String @id
+  failures Int @default(0)
+  windowStart DateTime @default(now())
 }

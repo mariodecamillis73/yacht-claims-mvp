@@ -1,3 +1,19 @@
+# Current milestone — authenticated claim sharing (2 November 2026)
+
+Implemented on `feature/claim-access-control`, based on the recovery branch. This section supersedes the older recovery limitations below where they overlap.
+
+- Database-backed password login; signed HttpOnly sessions; active-account checks and throttling. Removed the unused browser identity registry and demo-login behavior.
+- Roles: director, staff, representative, supplier, dealer. Director manages users and yacht assignments through `/users` and validates claims; staff cannot approve. Representatives are restricted to assigned yachts. Supplier/dealer access is restricted to individual grants.
+- Director can create expiring claim invitations for an email, copy the link and revoke access. Guest verifies a single-use email code through SMTP before opening a claim. A link alone cannot disclose data.
+- Shared comments, photo/document upload and protected downloads work for guests and signed-in participants. Internal content is excluded from external responses. Old comments/documents default to internal during migration. Existing metadata-only attachments still need file import.
+- Fresh-install migrations and a tested baseline path for the original Mac schema. Director bootstrap script and configuration/runbook in README.
+- Production build, TypeScript and access integration tests passed. Integration tests use a disposable migrated database and local SMTP sink; no real messages were sent. The baseline migration was also tested against existing records.
+- Browser visual QA could not run: Chromium is absent and its download was unavailable. The optional `YY_UI_TEST=1` test path requires Playwright with Chromium installed.
+
+Next release work: browser/mobile QA, dependency security upgrades, account activation/password reset, remaining claim creation/status UI, comprehensive audit logging, upload scanning/quotas, backup/restore and hosting/domain/SMTP setup. Not deployed; no changes merged into main. SQLite requires a persistent disk and one application instance. No real SMTP configuration is included.
+
+---
+
 # Yacht Claims MVP - Session Summary
 
 ## Repository

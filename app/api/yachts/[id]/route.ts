@@ -1,9 +1,34 @@
-export const dynamic = 'force-dynamic';
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
-const prisma = new PrismaClient();
-export async function GET(_: Request, { params }: { params: { id: string } }) {
-  const yacht = await prisma.yacht.findUnique({ where: { hullNumber: params.id }, include: { claims: true } });
-  if (!yacht) return NextResponse.json({ error: 'Yacht not found' }, { status: 404 });
-  return NextResponse.json({ ...yacht, id: yacht.hullNumber, yachtNumber: yacht.hullNumber, technicalProfile: [], documents: [] });
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { user, yachtAllowed, internal, HttpError, fail } from "@/lib/auth";
+export const dynamic = "force-dynamic";
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } },
+) {
+  try {
+    const u = await user(request);
+    if (!internal(u.role) && u.role !== "representative")
+      throw new HttpError(404, "Yacht not found");
+    if (!(await yachtAllowed(u.id, u.role, params.id)))
+      throw new HttpError(404, "Yacht not found");
+    const y = await db.yacht.findUnique({
+      where: { hullNumber: params.id },
+      include: {
+        claims: {
+          select: { id: true, title: true, status: true, priority: true },
+        },
+      },
+    });
+    if (!y) throw new HttpError(404, "Yacht not found");
+    return NextResponse.json({
+      ...y,
+      id: y.hullNumber,
+      yachtNumber: y.hullNumber,
+      technicalProfile: [],
+      documents: [],
+    });
+  } catch (e) {
+    return fail(e);
+  }
 }

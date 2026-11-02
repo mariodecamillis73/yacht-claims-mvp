@@ -1,0 +1,261 @@
+"use client";
+import { useEffect, useState } from "react";
+export default function ClaimActions({
+  id,
+  onChange,
+}: {
+  id: string;
+  onChange: () => void;
+}) {
+  const [role, setRole] = useState("");
+  const [email, setEmail] = useState("");
+  const [kind, setKind] = useState("supplier");
+  const [days, setDays] = useState(30);
+  const [shares, setShares] = useState<any[]>([]);
+  const [link, setLink] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [visibility, setVisibility] = useState("shared");
+  const [reason, setReason] = useState("");
+  const base = `/api/claims/${id}`;
+  const inside = ["director", "staff"].includes(role);
+  async function loadShares() {
+    const r = await fetch(base + "/shares");
+    if (r.ok) setShares(await r.json());
+  }
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((u) => {
+        setRole(u?.role || "");
+        if (u?.role === "director") loadShares();
+      });
+  }, [base]);
+  async function run(action: () => Promise<void>) {
+    setBusy(true);
+    setError("");
+    try {
+      await action();
+      onChange();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function json(path: string, method: string, body: unknown) {
+    const r = await fetch(path, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const b = await r.json();
+    if (!r.ok) throw new Error(b.error);
+    return b;
+  }
+  return (
+    <section>
+      <h3>Actions</h3>
+      {error && <p role="alert">{error}</p>}
+      <label>
+        Comment
+        <textarea
+          className="textarea"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+      </label>
+      {inside && (
+        <label>
+          Visibility
+          <select
+            className="input"
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value)}
+          >
+            <option value="shared">Shared with authorized participants</option>
+            <option value="internal">Internal to yard</option>
+          </select>
+        </label>
+      )}
+      <button
+        className="button"
+        disabled={busy || !message.trim()}
+        onClick={() =>
+          run(async () => {
+            await json(base + "/comments", "POST", { message, visibility });
+            setMessage("");
+          })
+        }
+      >
+        Add comment
+      </button>
+      <p>
+        <label>
+          Upload photo or document (max 5 MB)
+          <input
+            type="file"
+            disabled={busy}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f)
+                run(async () => {
+                  const body = new FormData();
+                  body.set("file", f);
+                  body.set("visibility", visibility);
+                  const r = await fetch(base + "/documents", {
+                    method: "POST",
+                    body,
+                  });
+                  if (!r.ok) throw new Error((await r.json()).error);
+                });
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </p>
+      {role === "director" && (
+        <>
+          <h3>Director validation</h3>
+          <label>
+            Rejection reason
+            <input
+              className="input"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </label>
+          <button
+            className="button"
+            disabled={busy}
+            onClick={() =>
+              run(async () => {
+                await json(base + "/validate", "POST", {
+                  decision: "approved",
+                });
+              })
+            }
+          >
+            Approve
+          </button>{" "}
+          <button
+            className="button secondary"
+            disabled={busy || !reason.trim()}
+            onClick={() =>
+              run(async () => {
+                await json(base + "/validate", "POST", {
+                  decision: "rejected",
+                  rejectionReason: reason,
+                });
+              })
+            }
+          >
+            Reject
+          </button>
+          <h3>Share this claim</h3>
+          <p>
+            The invitation grants access to shared comments, photos and
+            documents only.
+          </p>
+          <label>
+            Email
+            <input
+              type="email"
+              className="input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </label>
+          <label>
+            Participant
+            <select
+              className="input"
+              value={kind}
+              onChange={(e) => setKind(e.target.value)}
+            >
+              <option value="supplier">Supplier</option>
+              <option value="dealer">Dealer</option>
+            </select>
+          </label>
+          <label>
+            Expires in days
+            <input
+              type="number"
+              className="input"
+              min={1}
+              max={90}
+              value={days}
+              onChange={(e) => setDays(Number(e.target.value))}
+            />
+          </label>
+          <button
+            className="button"
+            disabled={busy || !email}
+            onClick={() =>
+              run(async () => {
+                const b = await json(base + "/shares", "POST", {
+                  email,
+                  role: kind,
+                  days,
+                });
+                setLink(window.location.origin + b.path);
+                await loadShares();
+              })
+            }
+          >
+            Create access link
+          </button>
+          {link && (
+            <div>
+              <p>Copy this link and send it to the authorized email address:</p>
+              <input
+                className="input"
+                aria-label="Claim access link"
+                readOnly
+                value={link}
+              />
+              <button
+                className="button secondary"
+                onClick={() =>
+                  run(async () => {
+                    await navigator.clipboard.writeText(link);
+                  })
+                }
+              >
+                Copy link
+              </button>
+              <p>Opening the link requires verification via email.</p>
+            </div>
+          )}
+          {shares.map((s) => (
+            <div className="comment" key={s.id}>
+              <p>
+                {s.email} · {s.role} ·{" "}
+                {s.revokedAt
+                  ? "Revoked"
+                  : new Date(s.expiresAt) < new Date()
+                    ? "Expired"
+                    : `Expires ${new Date(s.expiresAt).toLocaleDateString()}`}
+              </p>
+              {!s.revokedAt && (
+                <button
+                  className="button secondary"
+                  disabled={busy}
+                  onClick={() =>
+                    run(async () => {
+                      await json(base + "/shares", "DELETE", { id: s.id });
+                      await loadShares();
+                    })
+                  }
+                >
+                  Revoke access
+                </button>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+    </section>
+  );
+}

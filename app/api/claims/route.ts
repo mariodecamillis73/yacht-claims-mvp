@@ -1,55 +1,88 @@
-export const dynamic = 'force-dynamic';
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
-
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import {
+  user,
+  internal,
+  yachtAllowed,
+  mutation,
+  HttpError,
+  fail,
+} from "@/lib/auth";
+import { z } from "zod";
+export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const status = searchParams.get('status');
-
-  const claims = await prisma.claim.findMany({
-    where: status ? { status } : undefined,
-    orderBy: { createdAt: 'desc' },
-    include: { yacht: true },
-  });
-
-  return NextResponse.json(claims);
-}
-
-export async function POST(request: Request) {
   try {
-    const body = await request.json();
-
-    if (!body.yachtHullNumber || !body.title || !body.description) {
-      return NextResponse.json(
-        {
-          error: 'Missing required fields: yachtHullNumber, title, description',
-        },
-        { status: 400 }
-      );
-    }
-
-    const claim = await prisma.claim.create({
-      data: {
-        yachtHullNumber: body.yachtHullNumber,
-        title: body.title,
-        description: body.description,
-        priority: body.priority ?? 'medium',
-        status: 'new',
-        validationStatus: 'pending',
-        assignedTo: body.assignedTo ?? null,
-        createdBy: body.createdBy ?? null,
-        supplierId: body.supplierId ?? null,
-        warrantyStatus: body.warrantyStatus ?? null,
+    const u = await user(request);
+    const where = internal(u.role)
+      ? {}
+      : u.role === "representative"
+        ? {
+            yachtHullNumber: {
+              in: (
+                await db.yachtMember.findMany({ where: { userId: u.id } })
+              ).map((m) => m.hullNumber),
+            },
+          }
+        : {
+            id: {
+              in: (
+                await db.claimGrant.findMany({
+                  where: {
+                    email: u.email,
+                    revokedAt: null,
+                    expiresAt: { gt: new Date() },
+                  },
+                })
+              ).map((g) => g.claimId),
+            },
+          };
+    const claims = await db.claim.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        priority: true,
+        yachtHullNumber: true,
+        createdAt: true,
+        updatedAt: true,
+        yacht: { select: { name: true } },
+        ...(internal(u.role)
+          ? { validatedBy: true, validationStatus: true }
+          : {}),
       },
     });
-
-    return NextResponse.json(claim, { status: 201 });
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to create claim', details: String(error) },
-      { status: 500 }
-    );
+    return NextResponse.json(claims);
+  } catch (e) {
+    return fail(e);
+  }
+}
+export async function POST(request: Request) {
+  try {
+    mutation(request);
+    const u = await user(request);
+    if (!internal(u.role) && u.role !== "representative")
+      throw new HttpError(403, "Not permitted");
+    const parsed = z
+      .object({
+        yachtHullNumber: z.string().min(1),
+        title: z.string().min(1).max(250),
+        description: z.string().min(1).max(20000),
+        priority: z
+          .enum(["low", "medium", "high", "critical"])
+          .default("medium"),
+      })
+      .safeParse(await request.json());
+    if (!parsed.success) throw new HttpError(400, "Invalid claim fields");
+    if (!(await yachtAllowed(u.id, u.role, parsed.data.yachtHullNumber)))
+      throw new HttpError(404, "Yacht not found");
+    const c = await db.claim.create({
+      data: { ...parsed.data, createdBy: u.id },
+    });
+    return NextResponse.json(c, { status: 201 });
+  } catch (e) {
+    return fail(e);
   }
 }

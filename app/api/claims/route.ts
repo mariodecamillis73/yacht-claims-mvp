@@ -18,36 +18,28 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const {
-      yachtId,
-      title,
-      description,
-      priority,
-      assignedTo,
-      supplierId,
-      createdBy,
-      warrantyStatus,
-    } = body;
 
-    if (!yachtId || !title || !description) {
+    if (!body.yachtHullNumber || !body.title || !body.description) {
       return NextResponse.json(
-        { error: 'Missing required fields: yachtId, title, description' },
+        {
+          error: 'Missing required fields: yachtHullNumber, title, description',
+        },
         { status: 400 }
       );
     }
 
     const claim = await prisma.claim.create({
       data: {
-        yachtId,
-        title,
-        description,
-        priority: priority ?? 'medium',
+        yachtHullNumber: body.yachtHullNumber,
+        title: body.title,
+        description: body.description,
+        priority: body.priority ?? 'medium',
         status: 'new',
         validationStatus: 'pending',
-        assignedTo: assignedTo ?? null,
-        supplierId: supplierId ?? null,
-        createdBy: createdBy ?? null,
-        warrantyStatus: warrantyStatus ?? null,
+        assignedTo: body.assignedTo ?? null,
+        createdBy: body.createdBy ?? null,
+        supplierId: body.supplierId ?? null,
+        warrantyStatus: body.warrantyStatus ?? null,
       },
     });
 

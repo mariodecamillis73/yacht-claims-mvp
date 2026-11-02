@@ -1,3 +1,9 @@
+## Subsequent owner-requested account update
+
+The initial director account was updated in place using owner-supplied runtime secrets. The initial generated password is no longer the active login credential. No plaintext password is committed to this repository. Credential maintenance is executed once using a durable database marker; subsequent restarts do not replay it. Existing sessions are invalidated when the password hash changes. Deployment `dep-dbk6cqdg1s2s739egin0` (commit `4fa0e19434547eed9b41fa812f69e55ffc8e5fd5`) is verified live. Local build, access tests, rotation/restart tests and GitHub CI passed.
+
+---
+
 # YY ASM staging deployment
 
 ## Live staging checkpoint — 2 November 2026

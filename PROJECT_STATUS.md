@@ -1,3 +1,9 @@
+# Live staging — 2 November 2026
+
+Verified live: https://yy-asm-staging.onrender.com/login. Render service `srv-dbk68oe7bikc7399cql0`, Frankfurt, Starter, single instance, persistent 1 GB disk. Deployment `dep-dbk68pm7bikc7399ctg0` succeeded from commit `f17083fddc79908d79bb9a04fcb40180b8b8480a`. Database migrations and first-director creation passed; login screen visually verified. No original records imported. The account owner retrieves the Render-generated ADMIN_PASSWORD privately from the service Environment screen; the assistant has not read it. SMTP configuration and full authenticated/browser/mobile QA remain pending. This checkpoint supersedes the 'not deployed' statements in the historical notes below. Details: STAGING_DEPLOYMENT.md.
+
+---
+
 # Current milestone — staging preparation (2 November 2026)
 
 Prepared on `feature/staging-ready`, stacked on the access-control branch. Supersedes overlapping runtime/deployment notes below.

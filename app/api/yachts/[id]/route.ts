@@ -28,7 +28,13 @@ export async function GET(
       where: { hullNumber: params.id },
       include: {
         claims: {
-          select: { id: true, title: true, status: true, priority: true },
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            priority: true,
+            dueDate: true,
+          },
         },
       },
     });

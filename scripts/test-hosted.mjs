@@ -1,5 +1,6 @@
+import { PrismaClient } from "@prisma/client";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
@@ -105,7 +106,46 @@ try {
     201,
   );
   await stop();
+  // Simulate the existing deployment immediately before the new additive migration.
+  const migrationDb = new PrismaClient({
+    datasources: { db: { url: env.DATABASE_URL } },
+  });
+  try {
+    await migrationDb.$executeRawUnsafe(
+      'ALTER TABLE "Claim" DROP COLUMN "dueDate"',
+    );
+    await migrationDb.$executeRawUnsafe(
+      'DELETE FROM "_prisma_migrations" WHERE migration_name = ?',
+      "202611020004_claim_due_date",
+    );
+  } finally {
+    await migrationDb.$disconnect();
+  }
   await start({ ADMIN_PASSWORD: "Different-password-must-not-reset" });
+  const snapshots = await readdir(join(directory, "backups"));
+  assert.equal(
+    snapshots.filter((name) => name.startsWith("pre-migration-")).length,
+    1,
+  );
+  const snapshot = new PrismaClient({
+    datasources: {
+      db: { url: "file:" + join(directory, "backups", snapshots[0]) },
+    },
+  });
+  try {
+    assert.equal(
+      Number(
+        (
+          await snapshot.$queryRawUnsafe(
+            'SELECT COUNT(*) as total FROM "Claim"',
+          )
+        )[0].total,
+      ),
+      1,
+    );
+  } finally {
+    await snapshot.$disconnect();
+  }
   login = await request("/api/auth/login", "POST", {
     email: env.ADMIN_EMAIL,
     password: env.ADMIN_PASSWORD,
@@ -126,19 +166,49 @@ try {
   });
   assert.equal(logout.status, 200);
   const oldCookie = login.cookie;
-  const rotation = { ADMIN_ROTATE_FROM_EMAIL: env.ADMIN_EMAIL, ADMIN_EMAIL: 'updated@example.invalid', ADMIN_PASSWORD: 'Test-rotate-99@', ADMIN_ROTATION_ID: 'test-once' };
+  const rotation = {
+    ADMIN_ROTATE_FROM_EMAIL: env.ADMIN_EMAIL,
+    ADMIN_EMAIL: "updated@example.invalid",
+    ADMIN_PASSWORD: "Test-rotate-99@",
+    ADMIN_ROTATION_ID: "test-once",
+  };
   await stop();
   await start(rotation);
-  assert.equal((await request('/api/claims','GET',undefined,oldCookie)).status,401);
-  assert.equal((await request('/api/auth/login','POST',{email:env.ADMIN_EMAIL,password:env.ADMIN_PASSWORD})).status,401);
-  assert.equal((await request('/api/auth/login','POST',{email:rotation.ADMIN_EMAIL,password:rotation.ADMIN_PASSWORD})).status,200);
+  assert.equal(
+    (await request("/api/claims", "GET", undefined, oldCookie)).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request("/api/auth/login", "POST", {
+        email: env.ADMIN_EMAIL,
+        password: env.ADMIN_PASSWORD,
+      })
+    ).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request("/api/auth/login", "POST", {
+        email: rotation.ADMIN_EMAIL,
+        password: rotation.ADMIN_PASSWORD,
+      })
+    ).status,
+    200,
+  );
   await stop();
-  await start({...rotation,ADMIN_PASSWORD:'Ignore-this-on-restart'});
-  login = await request('/api/auth/login','POST',{email:rotation.ADMIN_EMAIL,password:rotation.ADMIN_PASSWORD});
-  assert.equal(login.status,200);
-  assert.equal((await request('/api/claims','GET',undefined,login.cookie)).data.length,1);
+  await start({ ...rotation, ADMIN_PASSWORD: "Ignore-this-on-restart" });
+  login = await request("/api/auth/login", "POST", {
+    email: rotation.ADMIN_EMAIL,
+    password: rotation.ADMIN_PASSWORD,
+  });
+  assert.equal(login.status, 200);
+  assert.equal(
+    (await request("/api/claims", "GET", undefined, login.cookie)).data.length,
+    1,
+  );
   console.log(
-    "PASS: hosted migrations, secure configuration checks, first-director provisioning, health check, restart persistence, no password reset, canonical-origin CSRF validation, one-time director credential rotation and old-session revocation.",
+    "PASS: hosted migrations and verified pre-migration snapshot, secure configuration checks, first-director provisioning, health check, restart persistence, no password reset, canonical-origin CSRF validation, one-time director credential rotation and old-session revocation.",
   );
 } finally {
   await stop();

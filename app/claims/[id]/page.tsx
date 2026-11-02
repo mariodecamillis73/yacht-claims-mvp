@@ -8,10 +8,15 @@ import { useParams } from "next/navigation";
 
 export default function ClaimPage() {
   const params = useParams<{ id: string }>();
+  const [role, setRole] = useState("");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((u) => setRole(u?.role || ""))
+      .catch(() => {});
     fetch(`/api/claims/${params.id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Unable to load claim");
@@ -33,10 +38,12 @@ export default function ClaimPage() {
         <div>Yacht Claims MVP</div>
         <nav>
           <Link href="/workhub">Work Hub</Link>
-          <Link href={`/yachts/${data.claim.yachtHullNumber}`}>
-            Yacht Overview
-          </Link>
-          <Link href="/my-yacht">My Yacht</Link>
+          {["director", "staff", "representative"].includes(role) && (
+            <Link href={`/yachts/${data.claim.yachtHullNumber}`}>
+              Yacht Overview
+            </Link>
+          )}
+          {role === "representative" && <Link href="/my-yacht">My Yacht</Link>}
         </nav>
       </div>
 
@@ -91,6 +98,9 @@ export default function ClaimPage() {
           <div className="section">
             <h3>Description</h3>
             <p style={{ whiteSpace: "pre-wrap" }}>{data.claim.description}</p>
+            {data.claim.dueDate && (
+              <p>Target completion: {data.claim.dueDate.slice(0, 10)} (UTC)</p>
+            )}
             {data.claim.closedAt && (
               <p>Closed: {new Date(data.claim.closedAt).toLocaleString()}</p>
             )}

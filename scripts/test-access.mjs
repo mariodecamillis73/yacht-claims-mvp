@@ -785,6 +785,117 @@ try {
     }),
   );
 
+  const supplierRow = await req("/api/suppliers", {
+    cookie: cookies.director,
+    method: "POST",
+    body: {
+      name: "Contact",
+      companyName: "Supplier company",
+      email: "supplier@example.invalid",
+      phone: "1234",
+    },
+  });
+  assert.equal(supplierRow.status, 201);
+  assert.equal(
+    (await req("/api/suppliers", { cookie: cookies.staff })).status,
+    200,
+  );
+  for (const role of ["representative", "supplier", "dealer"]) {
+    assert.equal(
+      (await req("/api/suppliers", { cookie: cookies[role] })).status,
+      403,
+    );
+    assert.equal(
+      (await req("/api/team", { cookie: cookies[role] })).status,
+      403,
+    );
+  }
+  assert.equal(
+    (
+      await req("/api/suppliers", {
+        cookie: cookies.staff,
+        method: "POST",
+        body: { name: "X", companyName: "Y", email: "s@example.invalid" },
+      })
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await req("/api/suppliers", {
+        cookie: cookies.director,
+        method: "PATCH",
+        body: {
+          id: supplierRow.data.id,
+          name: "Updated contact",
+          companyName: "Supplier company",
+          email: "supplier@example.invalid",
+        },
+      })
+    ).status,
+    200,
+  );
+  const managed = await req(`/api/claims/${flowId}`, {
+    cookie: cookies.staff,
+    method: "PATCH",
+    body: {
+      assignedTo: "staff",
+      supplierId: supplierRow.data.id,
+      warrantyStatus: "covered",
+      dueDate: "2000-01-01",
+      priority: "critical",
+    },
+  });
+  assert.equal(managed.status, 200, JSON.stringify(managed.data));
+  assert.equal(managed.data.warrantyStatus, "covered");
+  assert.equal(managed.data.dueDate, "2000-01-01T23:59:59.999Z");
+  assert.equal(
+    (await req(`/api/claims/${flowId}`, { cookie: cookies.supplier })).status,
+    404,
+  );
+  for (const body of [
+    { assignedTo: "representative" },
+    { supplierId: "missing" },
+    { dueDate: "2026-02-30" },
+    { warrantyStatus: "unknown" },
+    {},
+  ])
+    assert.equal(
+      (
+        await req(`/api/claims/${flowId}`, {
+          cookie: cookies.staff,
+          method: "PATCH",
+          body,
+        })
+      ).status,
+      400,
+    );
+  assert.ok(
+    (await req("/api/claims?filter=mine", { cookie: cookies.staff })).data.some(
+      (c) => c.id === flowId,
+    ),
+  );
+  assert.ok(
+    (
+      await req("/api/claims?filter=overdue", { cookie: cookies.director })
+    ).data.some((c) => c.id === flowId),
+  );
+  assert.ok(
+    !(
+      await req("/api/claims?filter=overdue", { cookie: cookies.supplier })
+    ).data.some((c) => c.id === flowId),
+  );
+  assert.equal(
+    (await req("/api/claims?filter=bogus", { cookie: cookies.director }))
+      .status,
+    400,
+  );
+  const externalView = (
+    await req(`/api/claims/${flowId}`, { cookie: cookies.representative })
+  ).data.claim;
+  assert.equal(externalView.assignedTo, undefined);
+  assert.equal(externalView.supplierId, undefined);
+  assert.equal(externalView.warrantyStatus, undefined);
   assert.equal(
     (
       await req(`/api/claims/${flowId}`, {
@@ -829,6 +940,11 @@ try {
   }
   const closed = await req(`/api/claims/${flowId}`, { cookie: cookies.staff });
   assert.ok(closed.data.claim.closedAt);
+  assert.ok(
+    !(
+      await req("/api/claims?filter=overdue", { cookie: cookies.director })
+    ).data.some((c) => c.id === flowId),
+  );
   assert.equal(
     closed.data.activity.filter((x) => x.action === "status_changed").length,
     3,

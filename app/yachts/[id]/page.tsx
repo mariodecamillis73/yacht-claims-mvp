@@ -83,7 +83,16 @@ export default function YachtOverviewPage() {
             </div>
             <div className="summary-card">
               <span className="muted">Overdue</span>
-              <strong>—</strong>
+              <strong>
+                {
+                  data.claims.filter(
+                    (c: any) =>
+                      c.dueDate &&
+                      new Date(c.dueDate) < new Date() &&
+                      !["closed", "rejected"].includes(c.status),
+                  ).length
+                }
+              </strong>
             </div>
             <div className="summary-card">
               <span className="muted">Supplier pending</span>

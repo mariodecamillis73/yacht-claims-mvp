@@ -12,11 +12,13 @@ export async function claimView(id: string, isInternal: boolean) {
       createdAt: true,
       updatedAt: true,
       closedAt: true,
+      dueDate: true,
       ...(isInternal
         ? {
             warrantyStatus: true,
             validationStatus: true,
             assignedTo: true,
+            supplierId: true,
             validatedBy: true,
             rejectedReason: true,
           }

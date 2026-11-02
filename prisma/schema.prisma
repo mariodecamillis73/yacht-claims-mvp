@@ -58,6 +58,7 @@ model Claim {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   closedAt         DateTime?
+  dueDate          DateTime?
 
   comments     Comment[]
   documents    Document[]

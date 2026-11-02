@@ -28,11 +28,16 @@ export async function PATCH(
     if (!a.isInternal) throw new HttpError(403, "Not permitted");
     const p = z
       .object({
-        title: z.string().min(1).max(250).optional(),
-        description: z.string().min(1).max(20000).optional(),
+        title: z.string().trim().min(1).max(250).optional(),
+        description: z.string().trim().min(1).max(20000).optional(),
         priority: z.enum(["low", "medium", "high", "critical"]).optional(),
         status: z
           .enum(["assigned", "in_progress", "supplier_pending", "closed"])
+          .optional(),
+        dueDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable()
           .optional(),
         assignedTo: z.string().nullable().optional(),
         supplierId: z.string().nullable().optional(),
@@ -43,6 +48,30 @@ export async function PATCH(
       .strict()
       .safeParse(await request.json());
     if (!p.success) throw new HttpError(400, "Invalid update");
+    if (!Object.keys(p.data).length)
+      throw new HttpError(400, "No changes supplied");
+    if (
+      p.data.dueDate &&
+      (!Number.isFinite(Date.parse(p.data.dueDate)) ||
+        new Date(p.data.dueDate).toISOString().slice(0, 10) !== p.data.dueDate)
+    )
+      throw new HttpError(400, "Invalid deadline");
+    if (
+      p.data.assignedTo &&
+      !(await db.user.findFirst({
+        where: {
+          id: p.data.assignedTo,
+          isActive: true,
+          role: { in: ["director", "staff"] },
+        },
+      }))
+    )
+      throw new HttpError(400, "Choose an active yard team member");
+    if (
+      p.data.supplierId &&
+      !(await db.supplier.findUnique({ where: { id: p.data.supplierId } }))
+    )
+      throw new HttpError(400, "Supplier not found");
     if (p.data.status && a.claim.validationStatus !== "approved")
       throw new HttpError(409, "Director approval required");
     if (
@@ -62,6 +91,13 @@ export async function PATCH(
         },
         data: {
           ...p.data,
+          ...(p.data.dueDate !== undefined
+            ? {
+                dueDate: p.data.dueDate
+                  ? new Date(p.data.dueDate + "T23:59:59.999Z")
+                  : null,
+              }
+            : {}),
           ...(p.data.status
             ? { closedAt: p.data.status === "closed" ? new Date() : null }
             : {}),
@@ -81,7 +117,7 @@ export async function PATCH(
           action: p.data.status ? "status_changed" : "updated",
           details: p.data.status
             ? `${STATUS_LABELS[a.claim.status] || a.claim.status} → ${STATUS_LABELS[p.data.status]}`
-            : "Claim details updated",
+            : "Claim fields updated: " + Object.keys(p.data).join(", "),
         },
       });
       return claim;

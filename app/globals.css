@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 :root {
   --bg: #f4f7fb;
@@ -19,12 +19,13 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   min-height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 a {
@@ -32,7 +33,10 @@ a {
   text-decoration: none;
 }
 
-button, input, select, textarea {
+button,
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -91,14 +95,34 @@ button, input, select, textarea {
   align-items: center;
 }
 
-.badge.status-open { background: #dbeafe; color: #1d4ed8; }
-.badge.status-supplier_pending { background: #fef3c7; color: #92400e; }
-.badge.status-closed { background: #dcfce7; color: #166534; }
-.badge.priority-high { background: #fee2e2; color: #991b1b; }
-.badge.priority-medium { background: #fef3c7; color: #92400e; }
-.badge.priority-low { background: #dcfce7; color: #166534; }
+.badge.status-open {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.badge.status-supplier_pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge.status-closed {
+  background: #dcfce7;
+  color: #166534;
+}
+.badge.priority-high {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.badge.priority-medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge.priority-low {
+  background: #dcfce7;
+  color: #166534;
+}
 
-.input, .select, .textarea {
+.input,
+.select,
+.textarea {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -231,7 +255,8 @@ button, input, select, textarea {
   border-collapse: collapse;
 }
 
-.mini-table th, .mini-table td {
+.mini-table th,
+.mini-table td {
   text-align: left;
   border-bottom: 1px solid var(--line);
   padding: 10px 8px;
@@ -251,11 +276,60 @@ button, input, select, textarea {
 }
 
 /* Creation and workflow forms share the existing application palette. */
-fieldset.form-grid { border: 0; padding: 0; margin: 0; min-width: 0; }
-.form-grid label { display: grid; gap: 6px; }
-.workflow-actions { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #dfe4ea; }
-.workflow-actions .button { margin-top: 10px; }
+fieldset.form-grid {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.form-grid label {
+  display: grid;
+  gap: 6px;
+}
+.workflow-actions {
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #dfe4ea;
+}
+.workflow-actions .button {
+  margin-top: 10px;
+}
 @media (max-width: 760px) {
-  .section-header, .claim-header, .claim-header-actions { flex-wrap: wrap; gap: 12px; }
-  .summary-cards, .layout-grid, .grid-2 { grid-template-columns: 1fr; }
+  .section-header,
+  .claim-header,
+  .claim-header-actions {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .summary-cards,
+  .layout-grid,
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+.language-bar {
+  padding: 8px 24px;
+  text-align: right;
+  background: #eef2f7;
+  color: #0f233e;
+}
+.language-bar select {
+  padding: 5px;
+  border-radius: 5px;
+}
+.claim-list-item {
+  padding: 12px 0;
+  border-top: 1px solid #dfe4ea;
+  overflow-wrap: anywhere;
+}
+.topbar nav {
+  flex-wrap: wrap;
+}
+@media (max-width: 760px) {
+  .topbar {
+    height: auto;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 16px;
+  }
 }

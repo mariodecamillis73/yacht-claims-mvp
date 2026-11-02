@@ -36,9 +36,24 @@ export async function GET(request: Request) {
               ).map((g) => g.claimId),
             },
           };
+    const query = new URL(request.url).searchParams;
+    const filter = query.get("filter") || "all";
+    if (!["all", "mine", "overdue", "recent"].includes(filter))
+      throw new HttpError(400, "Invalid filter");
+    const extra =
+      filter === "mine"
+        ? { OR: [{ assignedTo: u.id }, { createdBy: u.id }] }
+        : filter === "overdue"
+          ? {
+              dueDate: { lt: new Date() },
+              status: { notIn: ["closed", "rejected"] },
+            }
+          : filter === "recent"
+            ? { updatedAt: { gte: new Date(Date.now() - 7 * 86400000) } }
+            : {};
     const claims = await db.claim.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
+      where: { AND: [where, extra] },
+      orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
       select: {
         id: true,
         title: true,
@@ -48,9 +63,16 @@ export async function GET(request: Request) {
         yachtHullNumber: true,
         createdAt: true,
         updatedAt: true,
+        dueDate: true,
         yacht: { select: { name: true } },
         ...(internal(u.role)
-          ? { validatedBy: true, validationStatus: true }
+          ? {
+              validatedBy: true,
+              validationStatus: true,
+              assignedTo: true,
+              supplierId: true,
+              warrantyStatus: true,
+            }
           : {}),
       },
     });

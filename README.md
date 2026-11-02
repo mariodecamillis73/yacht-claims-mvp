@@ -13,7 +13,9 @@ Use Node.js 22 or 24 and a persistent SQLite database (single application instan
 5. Create the first director using `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables, then `npm run admin:create`. Password minimum: 16 characters. Never put credentials in source control. No default/demo account is enabled.
 6. `npm run dev` for local development. For deployment: `npm run build` then `npm start`, behind HTTPS.
 
-New accounts created through `/users` require at least 8 characters, including a letter, a number and a non-whitespace special character; uppercase is optional. Passwords are limited to 72 UTF-8 bytes for bcrypt. Existing credentials are not changed by this rule. The browser and server use the same policy.\n\nThe director creates other accounts and assigns representatives to yachts at `/users`. Supplier/dealer accounts are optional: invited people can use email-code access without an account. Account passwords must be delivered through an appropriate private channel; automated account activation/password reset is not implemented yet.
+New accounts created through `/users` require at least 8 characters, including a letter, a number and a non-whitespace special character; uppercase is optional. Passwords are limited to 72 UTF-8 bytes for bcrypt. Existing credentials are not changed by this rule. The browser and server use the same policy.
+
+The director creates other accounts and assigns representatives to yachts at `/users`. Supplier/dealer accounts are optional: invited people can use email-code access without an account. Account passwords must be delivered through an appropriate private channel; automated account activation/password reset is not implemented yet.
 
 ## Existing Mac database
 
@@ -49,10 +51,28 @@ Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` be
 ```
 npm run build
 npm run test:access
+npm run test:hosted
+npm run test:backup
 ```
 
 The access test creates a disposable database through migrations and a local SMTP sink. It tests authentication, user provisioning and yacht assignment, role and claim isolation, internal content filtering, email verification, upload/download authorization, revocation and expired grants. It sends no external emails and does not touch the real database. Optional browser checks can be enabled with `YY_UI_TEST=1` when Playwright and Chromium are installed; `YY_QA_DIR` optionally selects the screenshot directory. Browser QA has not yet passed in this workspace. Ports 3525 and 3526 must be free.
 
 ## Before production deployment
 
-This is a staging-preparation milestone, not the final release. See [STAGING_DEPLOYMENT.md](STAGING_DEPLOYMENT.md) for the Render configuration and publication prerequisites. Remaining work includes browser/mobile verification, account activation/password reset, full claim creation/status UI, audit coverage for all mutations, malware scanning/quotas, automated backups/restore tests, operational monitoring and an agreed hosting/domain/SMTP configuration. Use one instance with a persistent disk for SQLite; multiple instances require a shared database and storage design. Configure request-size limits at the reverse proxy. Do not deploy the development database or test credentials.
+This is a live staging application, not a final production release. The source of truth is [PROJECT_STATUS.md](PROJECT_STATUS.md). Creation, editing, assignment, warranty assessment and status UI are implemented. Remaining commissioning: real SMTP, off-disk scheduled backups, authenticated browser/mobile acceptance and monitoring/domain. Self-service activation/password reset, malware scanning/quotas and full audit coverage are additional hardening. Use a single instance with a persistent disk. Never publish development databases or credentials.
+
+## Claim management and suppliers
+
+Yard users edit a claim's title, description, priority, internal responsible person, supplier, warranty assessment and target completion from the edit panel. Internal assignees must be active director/staff accounts. Supplier assignment never grants access: the director shares each claim separately. `/suppliers` provides the contact directory; only directors create/edit contacts.
+
+Work Hub: All; My work (assigned to or created by the current actor); Overdue (past target date, excluding closed/rejected); updated within the last seven days. Server filters preserve claim permissions. Search and yacht/status/priority refine the result. Target dates use end of the selected UTC day.
+
+## Localization
+
+Typed dictionaries (`lib/i18n.ts`) and a React provider support EN/IT/ES/DE for Work Hub and primary claim editing/workflow controls. Selection is stored in this browser. Some secondary forms/errors remain English. This is localization-ready architecture, not a claim of complete translation.
+
+## Database and attachment backup
+
+Inside the service environment run `npm run db:backup -- /secure/path/new-backup.db`. Destination must be new. SQLite VACUUM INTO creates a consistent snapshot including attachments; integrity/FK checks must pass. Keep a secure copy off disk and establish retention separately. Hosted startup creates a verified same-disk snapshot before pending migrations; this does not replace off-site backups.
+
+`npm run test:backup` verifies restoring a snapshot into a fresh disposable database, including attachment bytes. Operational restore: stop writes/service, preserve current data, restore a verified snapshot into a NEW path, inspect schema/integrity and point compatible application code at it. Never overwrite a running SQLite file. Code rollback does not roll back data. Off-site scheduling and a real recovery exercise remain commissioning work.

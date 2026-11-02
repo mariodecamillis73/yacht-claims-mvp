@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/components/language-provider";
+import ClaimEditor from "@/components/claim-editor";
 import { nextStatuses, STATUS_LABELS } from "@/lib/claim-workflow";
 export default function ClaimActions({
   id,
@@ -7,9 +9,10 @@ export default function ClaimActions({
   claim,
 }: {
   id: string;
-  claim: { status: string; validationStatus?: string };
+  claim: any;
   onChange: () => void;
 }) {
+  const { t } = useLanguage();
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [kind, setKind] = useState("supplier");
@@ -66,9 +69,10 @@ export default function ClaimActions({
     <section>
       <h3>Actions</h3>
       {error && <p role="alert">{error}</p>}
+      {inside && <ClaimEditor id={id} claim={claim} onChange={onChange} />}
       {inside && (
         <section className="workflow-actions">
-          <h3>Claim workflow</h3>
+          <h3>{t("workflow")}</h3>
           <p>
             Current status:{" "}
             <strong>{STATUS_LABELS[claim.status] || claim.status}</strong> ·
@@ -82,7 +86,7 @@ export default function ClaimActions({
           ) : (
             <>
               <label>
-                Next status
+                {t("nextStatus")}
                 <select
                   className="input"
                   value={nextStatus}
@@ -106,7 +110,7 @@ export default function ClaimActions({
                   })
                 }
               >
-                {claim.status === "closed" ? "Reopen claim" : "Update status"}
+                {claim.status === "closed" ? t("reopen") : t("updateStatus")}
               </button>
             </>
           )}
@@ -114,7 +118,7 @@ export default function ClaimActions({
       )}
 
       <label>
-        Comment
+        {t("comment")}
         <textarea
           className="textarea"
           value={message}
@@ -123,14 +127,14 @@ export default function ClaimActions({
       </label>
       {inside && (
         <label>
-          Visibility
+          {t("visibility")}
           <select
             className="input"
             value={visibility}
             onChange={(e) => setVisibility(e.target.value)}
           >
-            <option value="shared">Shared with authorized participants</option>
-            <option value="internal">Internal to yard</option>
+            <option value="shared">{t("shared")}</option>
+            <option value="internal">{t("internal")}</option>
           </select>
         </label>
       )}
@@ -144,7 +148,7 @@ export default function ClaimActions({
           })
         }
       >
-        Add comment
+        {t("addComment")}
       </button>
       <p>
         <label>

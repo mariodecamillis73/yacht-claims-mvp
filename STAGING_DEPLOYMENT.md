@@ -22,7 +22,7 @@ This configuration uses a paid `starter` service in Frankfurt, one instance, and
 6. Wait for the `/api/health` check to pass, open the deployed HTTPS URL and sign in. After retrieving and securely saving the initial password, bootstrap variables are no longer needed on restart. Coordinate their removal with the Blueprint: re-generating an environment value does not reset an already-created account password.
 7. Add real SMTP settings in runtime secrets (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM`) before testing guest verification. The application refuses verification when email cannot be delivered. Test with a mailbox you control before inviting any real supplier. Invitation links are copied for manual delivery; the application sends verification codes only.
 
-No original Mac database, real yacht records, uploaded files or existing credentials are imported automatically. Create clearly fictional test yachts/claims using the protected API until the creation UI is finished. The staging database starts empty; the Work Hub reports this honestly instead of substituting demo data.
+No original Mac database, real yacht records, uploaded files or existing credentials are imported automatically. Create clearly fictional test yachts/claims using the authenticated creation UI. The staging database starts empty; the Work Hub reports this honestly instead of substituting demo data.
 
 ## Verification performed locally
 
@@ -35,13 +35,13 @@ No original Mac database, real yacht records, uploaded files or existing credent
 
 ## Backup and rollback
 
-For this single-instance SQLite staging service, schedule a consistent database backup and verify restore before admitting real records. Render disk snapshots are a supplemental recovery mechanism, not a substitute for a tested application backup. Stop writes or use SQLite's backup API; do not copy a live database file blindly. Database and attachments live in the same file.
+For this single-instance SQLite staging service, schedule a consistent database backup and verify restore before admitting real records. Render disk snapshots are a supplemental recovery mechanism, not a substitute for a tested application backup. Use `npm run db:backup -- /secure/new-backup.db` (VACUUM INTO with integrity/FK checks), or stop writes; do not copy a live database file blindly. Startup creates a verified same-disk pre-migration snapshot; establish off-disk copies and retention separately. Database and attachments live in the same file.
 
 Before schema upgrades, preserve a database backup. Rolling application code back does not automatically reverse a database migration. Restore a matching database snapshot if necessary. Never run reset/db-push commands against the hosted disk. An existing unversioned Mac database requires the separately documented baseline procedure and must not be substituted into staging silently.
 
 ## Remaining release work
 
-Browser/mobile QA; final claim creation/status UI; account activation/password reset; full mutation auditing; upload scanning/quotas; tested backups; monitoring; SMTP deliverability. The staging release is for controlled evaluation, not final customer operations.
+Browser/mobile acceptance; authorized SMTP deliverability; scheduled off-disk backups and operational recovery; monitoring/domain. Creation/edit/status/assignment UI and consistent snapshot/restore testing are implemented. Account activation/password reset, full auditing and scanning/quotas remain additional hardening. The staging release is for controlled evaluation, not final customer operations.
 
 ## Provider references
 

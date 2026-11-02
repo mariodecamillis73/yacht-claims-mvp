@@ -224,6 +224,24 @@ try {
     ).status,
     201,
   );
+  for (const [candidate, expected] of [
+    ['abcd12@',400],
+    ['abcdefgh1',400],
+    ['abcdefgh@',400],
+    ['1234567@',400],
+    ['abc12345 ',400],
+    ['a'.repeat(71)+'1@',400],
+    ['abcd123@',201],
+    ['lowercase9#',201],
+    ['letters9 @',201],
+  ]) {
+    const email = `policy-${Math.random().toString(36).slice(2)}@example.invalid`;
+    const result = await req('/api/users',{cookie:cookies.director,method:'POST',body:{email,password:candidate,firstName:'Policy',lastName:'Test',role:'staff'}});
+    assert.equal(result.status,expected,`Password policy case must return ${expected}`);
+    if(expected===201){
+      assert.equal((await req('/api/auth/login',{method:'POST',body:{email,password:candidate}})).status,200);
+    }
+  }
   const newLogin = await req("/api/auth/login", {
     method: "POST",
     body: { email: "new@example.invalid", password },

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { isValidPassword, PASSWORD_HELP, PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from "@/lib/password-policy";
 export default function Users() {
   const [users, setUsers] = useState<any[]>([]);
   const [yachts, setYachts] = useState<any[]>([]);
@@ -68,6 +69,10 @@ export default function Users() {
             className="section form-grid"
             onSubmit={(e) => {
               e.preventDefault();
+              if (!isValidPassword(form.password)) {
+                setError(PASSWORD_HELP);
+                return;
+              }
               action("/api/users", "POST", form);
             }}
           >
@@ -87,12 +92,15 @@ export default function Users() {
                           : "text"
                     }
                     autoComplete={key === "password" ? "new-password" : "off"}
-                    minLength={key === "password" ? 16 : 1}
+                    minLength={key === "password" ? PASSWORD_MIN_LENGTH : 1}
+                    maxLength={key === "password" ? PASSWORD_MAX_LENGTH : undefined}
+                    aria-describedby={key === "password" ? "password-help" : undefined}
                     value={form[key]}
                     onChange={(e) =>
                       setForm({ ...form, [key]: e.target.value })
                     }
                   />
+                  {key === "password" && <small id="password-help">{PASSWORD_HELP}</small>}
                 </label>
               ),
             )}

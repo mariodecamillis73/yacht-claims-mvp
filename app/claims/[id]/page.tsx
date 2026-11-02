@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import Link from "next/link";
+import ClaimActions from "@/components/claim-actions";
+import { useEffect, useState } from "react";
 
 export default function ClaimPage({ params }: { params: { id: string } }) {
   const [data, setData] = useState<any>(null);
@@ -9,11 +10,15 @@ export default function ClaimPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     fetch(`/api/claims/${params.id}`)
-      .then((res) => { if (!res.ok) throw new Error('Unable to load claim'); return res.json(); })
+      .then((res) => {
+        if (!res.ok) throw new Error("Unable to load claim");
+        return res.json();
+      })
       .then((json) => {
         setData(json);
         setLoading(false);
-      }).catch(() => setLoading(false));
+      })
+      .catch(() => setLoading(false));
   }, [params.id]);
 
   if (loading) return <div className="container">Loading claim...</div>;
@@ -25,7 +30,9 @@ export default function ClaimPage({ params }: { params: { id: string } }) {
         <div>Yacht Claims MVP</div>
         <nav>
           <Link href="/workhub">Work Hub</Link>
-          <Link href={`/yachts/${data.claim.yachtHullNumber}`}>Yacht Overview</Link>
+          <Link href={`/yachts/${data.claim.yachtHullNumber}`}>
+            Yacht Overview
+          </Link>
           <Link href="/my-yacht">My Yacht</Link>
         </nav>
       </div>
@@ -35,18 +42,41 @@ export default function ClaimPage({ params }: { params: { id: string } }) {
           <div className="claim-header">
             <div>
               <h2>{data.claim.title}</h2>
-              <div className="muted">{data.claim.id} • {data.claim.status}</div>
+              <div className="muted">
+                {data.claim.id} • {data.claim.status}
+              </div>
             </div>
             <div className="claim-header-actions">
-              <Link href={data.previousClaimId ? `/claims/${data.previousClaimId}` : '#'} className="button secondary">Previous</Link>
-              <Link href={data.nextClaimId ? `/claims/${data.nextClaimId}` : '#'} className="button">Next</Link>
+              <Link
+                href={
+                  data.previousClaimId ? `/claims/${data.previousClaimId}` : "#"
+                }
+                className="button secondary"
+              >
+                Previous
+              </Link>
+              <Link
+                href={data.nextClaimId ? `/claims/${data.nextClaimId}` : "#"}
+                className="button"
+              >
+                Next
+              </Link>
             </div>
           </div>
 
           <div className="grid grid-3">
-            <div className="summary-card"><span className="muted">Yacht</span><strong>{data.claim.yachtHullNumber}</strong></div>
-            <div className="summary-card"><span className="muted">Priority</span><strong>{data.claim.priority}</strong></div>
-            <div className="summary-card"><span className="muted">Warranty</span><strong>{data.claim.warrantyStatus}</strong></div>
+            <div className="summary-card">
+              <span className="muted">Yacht</span>
+              <strong>{data.claim.yachtHullNumber}</strong>
+            </div>
+            <div className="summary-card">
+              <span className="muted">Priority</span>
+              <strong>{data.claim.priority}</strong>
+            </div>
+            <div className="summary-card">
+              <span className="muted">Warranty</span>
+              <strong>{data.claim.warrantyStatus}</strong>
+            </div>
           </div>
         </div>
 
@@ -60,7 +90,10 @@ export default function ClaimPage({ params }: { params: { id: string } }) {
               <div className="grid" style={{ gap: 12 }}>
                 {data.comments.map((comment: any) => (
                   <div key={comment.id} className="comment">
-                    <div className="muted">{comment.userId} • {new Date(comment.createdAt).toLocaleString()}</div>
+                    <div className="muted">
+                      {comment.visibility} • {comment.userId} •{" "}
+                      {new Date(comment.createdAt).toLocaleString()}
+                    </div>
                     <div style={{ marginTop: 8 }}>{comment.message}</div>
                   </div>
                 ))}
@@ -69,14 +102,40 @@ export default function ClaimPage({ params }: { params: { id: string } }) {
           </div>
 
           <div className="section">
-            <h3>Actions</h3>
-            <div className="grid" style={{ gap: 12 }}>
-              <button className="button secondary">Update status</button>
-              <button className="button secondary">Assign user</button>
-              <button className="button secondary">Add note</button>
-              <button className="button secondary">Upload document</button>
-              <button className="button">Validate claim</button>
-            </div>
+            <ClaimActions
+              id={params.id}
+              onChange={() => {
+                fetch(`/api/claims/${params.id}`)
+                  .then((r) => {
+                    if (r.ok) return r.json();
+                    throw new Error();
+                  })
+                  .then(setData)
+                  .catch(() => setData(null));
+              }}
+            />
+            <h3>Photos and documents</h3>
+            {data.documents.map((d: any) => (
+              <div key={d.id}>
+                {d.mimeType.startsWith("image/") && (
+                  <img
+                    src={`/api/claims/${params.id}/documents/${d.id}`}
+                    alt={d.fileName}
+                    style={{ maxWidth: "100%" }}
+                  />
+                )}
+                <p>
+                  <a
+                    href={`/api/claims/${params.id}/documents/${d.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {d.fileName}
+                  </a>{" "}
+                  · {d.visibility}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

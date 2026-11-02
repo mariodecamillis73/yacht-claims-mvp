@@ -1,20 +1,15 @@
-import { NextResponse } from 'next/server';
-import { demoData } from '@/lib/mock-data';
-
-export async function GET(_: Request, { params }: { params: { token: string } }) {
-  const claimId = params.token;
-  const claim = demoData.claims.find((entry) => entry.id === claimId);
-
-  if (!claim) {
-    return NextResponse.json({ error: 'Claim not found' }, { status: 404 });
+import { NextResponse } from "next/server";
+import { guestAccess, fail } from "@/lib/auth";
+import { claimView } from "@/lib/claim-view";
+export const dynamic = "force-dynamic";
+export async function GET(
+  request: Request,
+  { params }: { params: { token: string } },
+) {
+  try {
+    const g = await guestAccess(request, params.token);
+    return NextResponse.json(await claimView(g.claimId, false));
+  } catch (e) {
+    return fail(e);
   }
-
-  return NextResponse.json({
-    id: claim.id,
-    title: claim.title,
-    description: claim.description,
-    status: claim.status,
-    yachId: claim.yachtId,
-    supplier_name: 'MarineParts'
-  });
 }

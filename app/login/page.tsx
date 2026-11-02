@@ -1,50 +1,51 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@marine.com');
-  const [password, setPassword] = useState('password123');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
 
     const data = await res.json();
     setLoading(false);
 
     if (!res.ok) {
-      setError(data.error || 'Unable to login');
+      setError(data.error || "Unable to login");
       return;
     }
 
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem("user", JSON.stringify(data.user));
 
-    if (data.user.role === 'customer') {
-      router.push('/my-yacht');
+    if (data.user.role === "representative") {
+      router.push("/my-yacht");
       return;
     }
 
-    router.push('/workhub');
+    router.push("/workhub");
   };
 
   return (
     <div className="container">
       <div className="login-box">
         <h1>Yacht Claims MVP</h1>
-        <p className="muted">Internal operations, customer access and supplier portal</p>
+        <p className="muted">
+          Internal operations, customer access and supplier portal
+        </p>
 
         <form className="form-grid" onSubmit={handleSubmit}>
           <div>
@@ -71,15 +72,17 @@ export default function LoginPage() {
             />
           </div>
 
-          {error ? <div className="badge status-supplier_pending">{error}</div> : null}
+          {error ? (
+            <div className="badge status-supplier_pending">{error}</div>
+          ) : null}
 
           <button className="button" disabled={loading} type="submit">
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
         <div style={{ marginTop: 16 }} className="muted">
-          Demo login: admin@marine.com / password123
+          Sign in with your assigned account.
         </div>
       </div>
     </div>

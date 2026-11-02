@@ -9,11 +9,11 @@ export default function YachtOverviewPage({ params }: { params: { id: string } }
 
   useEffect(() => {
     fetch(`/api/yachts/${params.id}`)
-      .then((res) => res.json())
+      .then((res) => { if (!res.ok) throw new Error('Unable to load yacht'); return res.json(); })
       .then((json) => {
         setData(json);
         setLoading(false);
-      });
+      }).catch(() => setLoading(false));
   }, [params.id]);
 
   if (loading) return <div className="container">Loading yacht overview...</div>;
@@ -45,7 +45,7 @@ export default function YachtOverviewPage({ params }: { params: { id: string } }
 
           <div className="summary-cards">
             <div className="summary-card"><span className="muted">Open claims</span><strong>{data.claims.filter((c: any) => c.status !== 'closed').length}</strong></div>
-            <div className="summary-card"><span className="muted">Overdue</span><strong>{2}</strong></div>
+            <div className="summary-card"><span className="muted">Overdue</span><strong>—</strong></div>
             <div className="summary-card"><span className="muted">Supplier pending</span><strong>{data.claims.filter((c: any) => c.status === 'supplier_pending').length}</strong></div>
             <div className="summary-card"><span className="muted">Closed</span><strong>{data.claims.filter((c: any) => c.status === 'closed').length}</strong></div>
           </div>

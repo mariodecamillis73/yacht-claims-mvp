@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
@@ -10,6 +11,7 @@ export async function GET(request: Request) {
   const claims = await prisma.claim.findMany({
     where: status ? { status } : undefined,
     orderBy: { createdAt: 'desc' },
+    include: { yacht: true },
   });
 
   return NextResponse.json(claims);

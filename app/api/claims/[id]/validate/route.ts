@@ -9,7 +9,7 @@ export async function POST(
 ) {
   try {
     const body = await request.json();
-    const { decision, validatedBy, validationNote, rejectionReason } = body;
+    const { decision, validatedBy, rejectionReason } = body;
 
     if (!decision || !validatedBy) {
       return NextResponse.json(
@@ -21,6 +21,13 @@ export async function POST(
     if (decision === 'rejected' && !rejectionReason) {
       return NextResponse.json(
         { error: 'A rejection reason is required when the claim is rejected' },
+        { status: 400 }
+      );
+    }
+
+    if (decision !== 'approved' && decision !== 'rejected') {
+      return NextResponse.json(
+        { error: 'decision must be either approved or rejected' },
         { status: 400 }
       );
     }

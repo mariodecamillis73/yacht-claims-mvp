@@ -1,22 +1,55 @@
+export const dynamic = 'force-dynamic';
+import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
-import { demoData } from '@/lib/mock-data';
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
-  const claim = demoData.claims.find((entry) => entry.id === params.id);
+const prisma = new PrismaClient();
+
+export async function GET(
+  _request: Request,
+  { params }: { params: { id: string } }
+) {
+  const claim = await prisma.claim.findUnique({
+    where: { id: params.id },
+    include: {
+      comments: true,
+      documents: true,
+    },
+  });
 
   if (!claim) {
     return NextResponse.json({ error: 'Claim not found' }, { status: 404 });
   }
 
-  const claimIndex = demoData.claims.findIndex((entry) => entry.id === params.id);
-  const previousClaimId = demoData.claims[claimIndex - 1]?.id || null;
-  const nextClaimId = demoData.claims[claimIndex + 1]?.id || null;
+  return NextResponse.json({ claim, comments: claim.comments, documents: claim.documents, previousClaimId: null, nextClaimId: null });
+}
 
-  return NextResponse.json({
-    claim,
-    previousClaimId,
-    nextClaimId,
-    comments: demoData.comments.filter((comment) => comment.claimId === params.id),
-    documents: demoData.documents.filter((doc) => doc.claimId === params.id)
-  });
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await request.json();
+
+    const claim = await prisma.claim.update({
+      where: { id: params.id },
+      data: {
+        title: body.title,
+        description: body.description,
+        status: body.status,
+        priority: body.priority,
+        assignedTo: body.assignedTo,
+        supplierId: body.supplierId,
+        warrantyStatus: body.warrantyStatus,
+
+        closedAt: body.closedAt ?? undefined,
+      },
+    });
+
+    return NextResponse.json(claim);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to update claim', details: String(error) },
+      { status: 500 }
+    );
+  }
 }

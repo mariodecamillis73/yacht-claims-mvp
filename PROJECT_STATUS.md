@@ -97,3 +97,13 @@ Build a functional MVP for yacht After Sales and claims management, including:
 - localization-ready structure
 
 This file is intended to be a shareable summary of the current project session and working context.
+
+## Recovery checkpoint — 2 November 2026
+
+Recovered selected Mac changes on feature/recover-local-mvp. The Mac Work Hub layout now reads persistent claims, shows real yacht names, links to claim details and reports fetch failures instead of substituting demo claims. Recovered yacht list/create endpoints, persistent claim detail/update and validation decision checks. Kept list/create API at /api/claims; excluded misplaced duplicate routes. Yacht detail reads by hull number. Added dependency lock and missing bcrypt types.
+
+Original uploaded ZIP and database preserved separately; database and environment are not committed. Existing Mac database contains one yacht and one claim. For a fresh setup run npm ci, npm run prisma:generate and npm run prisma:push with DATABASE_URL configured. No seed script currently exists.
+
+Validation: production build and TypeScript passed; HTTP checks confirmed database claim list/detail, yacht detail, invalid decision (400), missing claim (404), Work Hub/login (200), root redirect (307). Browser visual verification remains pending.
+
+Limitations: authentication/authorization remain prototype-only; supplier portal and My Yacht still use demo sources. Action buttons and workflow enforcement require further work. This recovery does not make the application production-ready. Existing Next.js dependency needs a separate security update.

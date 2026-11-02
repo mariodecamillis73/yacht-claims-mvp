@@ -9,11 +9,11 @@ export default function ClaimPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     fetch(`/api/claims/${params.id}`)
-      .then((res) => res.json())
+      .then((res) => { if (!res.ok) throw new Error('Unable to load claim'); return res.json(); })
       .then((json) => {
         setData(json);
         setLoading(false);
-      });
+      }).catch(() => setLoading(false));
   }, [params.id]);
 
   if (loading) return <div className="container">Loading claim...</div>;
@@ -25,7 +25,7 @@ export default function ClaimPage({ params }: { params: { id: string } }) {
         <div>Yacht Claims MVP</div>
         <nav>
           <Link href="/workhub">Work Hub</Link>
-          <Link href={`/yachts/${data.yachtId}`}>Yacht Overview</Link>
+          <Link href={`/yachts/${data.claim.yachtHullNumber}`}>Yacht Overview</Link>
           <Link href="/my-yacht">My Yacht</Link>
         </nav>
       </div>
@@ -44,7 +44,7 @@ export default function ClaimPage({ params }: { params: { id: string } }) {
           </div>
 
           <div className="grid grid-3">
-            <div className="summary-card"><span className="muted">Yacht</span><strong>{data.claim.yachtId}</strong></div>
+            <div className="summary-card"><span className="muted">Yacht</span><strong>{data.claim.yachtHullNumber}</strong></div>
             <div className="summary-card"><span className="muted">Priority</span><strong>{data.claim.priority}</strong></div>
             <div className="summary-card"><span className="muted">Warranty</span><strong>{data.claim.warrantyStatus}</strong></div>
           </div>

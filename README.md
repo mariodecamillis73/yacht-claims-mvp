@@ -13,7 +13,7 @@ Use Node.js 22 or 24 and a persistent SQLite database (single application instan
 5. Create the first director using `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables, then `npm run admin:create`. Password minimum: 16 characters. Never put credentials in source control. No default/demo account is enabled.
 6. `npm run dev` for local development. For deployment: `npm run build` then `npm start`, behind HTTPS.
 
-The director creates other accounts and assigns representatives to yachts at `/users`. Supplier/dealer accounts are optional: invited people can use email-code access without an account. Account passwords must be delivered through an appropriate private channel; automated account activation/password reset is not implemented yet.
+New accounts created through `/users` require at least 8 characters, including a letter, a number and a non-whitespace special character; uppercase is optional. Passwords are limited to 72 UTF-8 bytes for bcrypt. Existing credentials are not changed by this rule. The browser and server use the same policy.\n\nThe director creates other accounts and assigns representatives to yachts at `/users`. Supplier/dealer accounts are optional: invited people can use email-code access without an account. Account passwords must be delivered through an appropriate private channel; automated account activation/password reset is not implemented yet.
 
 ## Existing Mac database
 

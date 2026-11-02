@@ -4,8 +4,9 @@ import { user, yachtAllowed, internal, HttpError, fail } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
+  const params = await context.params;
   try {
     const u = await user(request);
     if (!internal(u.role) && u.role !== "representative")

@@ -1,10 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-export default function SupplierPortalPage({
-  params,
-}: {
-  params: { token: string };
-}) {
+import { useParams } from "next/navigation";
+export default function SupplierPortalPage() {
+  const params = useParams<{ token: string }>();
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState("");
   const [code, setCode] = useState("");

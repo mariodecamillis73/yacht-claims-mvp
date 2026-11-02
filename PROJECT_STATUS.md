@@ -1,3 +1,17 @@
+# Current milestone — staging preparation (2 November 2026)
+
+Prepared on `feature/staging-ready`, stacked on the access-control branch. Supersedes overlapping runtime/deployment notes below.
+
+- Updated Next.js to 16.4.3, React to 19.3.1, Nodemailer to 10.3.1 and Zod to 4.6.7; adjusted async route parameters and client useParams. Removed unused UI dependencies.
+- Runtime dependency audit: zero known vulnerabilities. Full audit still has moderate findings in ESLint's development dependencies; these are pruned from the hosted installation.
+- Added Render staging Blueprint with a paid single-instance service, persistent SQLite disk, generated signing secret, first-director bootstrap, HTTPS-origin validation and health check. No resources created and no costs activated.
+- Build/typecheck, access integration tests and hosted bootstrap/restart/persistence tests passed locally.
+- Replaced unrelated Deno workflow with Node application CI; remote CI result is pending.
+- Waiting for Render connection before actual service creation. Provider price/plan must be reviewed before provisioning. Real SMTP and browser/mobile QA remain pending. Do not claim a live staging URL yet.
+- Deployment/runbook: STAGING_DEPLOYMENT.md. No original database or secrets are published.
+
+---
+
 # Current milestone — authenticated claim sharing (2 November 2026)
 
 Implemented on `feature/claim-access-control`, based on the recovery branch. This section supersedes the older recovery limitations below where they overlap.

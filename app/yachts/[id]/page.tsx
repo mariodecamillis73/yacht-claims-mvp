@@ -1,22 +1,29 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-export default function YachtOverviewPage({ params }: { params: { id: string } }) {
+export default function YachtOverviewPage() {
+  const params = useParams<{ id: string }>();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch(`/api/yachts/${params.id}`)
-      .then((res) => { if (!res.ok) throw new Error('Unable to load yacht'); return res.json(); })
+      .then((res) => {
+        if (!res.ok) throw new Error("Unable to load yacht");
+        return res.json();
+      })
       .then((json) => {
         setData(json);
         setLoading(false);
-      }).catch(() => setLoading(false));
+      })
+      .catch(() => setLoading(false));
   }, [params.id]);
 
-  if (loading) return <div className="container">Loading yacht overview...</div>;
+  if (loading)
+    return <div className="container">Loading yacht overview...</div>;
   if (!data) return <div className="container">Yacht not found.</div>;
 
   return (
@@ -35,7 +42,9 @@ export default function YachtOverviewPage({ params }: { params: { id: string } }
           <div className="claim-header">
             <div>
               <h2>{data.name}</h2>
-              <div className="muted">{data.yachtNumber} • {data.registrationNumber}</div>
+              <div className="muted">
+                {data.yachtNumber} • {data.registrationNumber}
+              </div>
             </div>
             <div className="claim-header-actions">
               <button className="button secondary">New claim</button>
@@ -44,10 +53,32 @@ export default function YachtOverviewPage({ params }: { params: { id: string } }
           </div>
 
           <div className="summary-cards">
-            <div className="summary-card"><span className="muted">Open claims</span><strong>{data.claims.filter((c: any) => c.status !== 'closed').length}</strong></div>
-            <div className="summary-card"><span className="muted">Overdue</span><strong>—</strong></div>
-            <div className="summary-card"><span className="muted">Supplier pending</span><strong>{data.claims.filter((c: any) => c.status === 'supplier_pending').length}</strong></div>
-            <div className="summary-card"><span className="muted">Closed</span><strong>{data.claims.filter((c: any) => c.status === 'closed').length}</strong></div>
+            <div className="summary-card">
+              <span className="muted">Open claims</span>
+              <strong>
+                {data.claims.filter((c: any) => c.status !== "closed").length}
+              </strong>
+            </div>
+            <div className="summary-card">
+              <span className="muted">Overdue</span>
+              <strong>—</strong>
+            </div>
+            <div className="summary-card">
+              <span className="muted">Supplier pending</span>
+              <strong>
+                {
+                  data.claims.filter(
+                    (c: any) => c.status === "supplier_pending",
+                  ).length
+                }
+              </strong>
+            </div>
+            <div className="summary-card">
+              <span className="muted">Closed</span>
+              <strong>
+                {data.claims.filter((c: any) => c.status === "closed").length}
+              </strong>
+            </div>
           </div>
         </div>
 
@@ -73,7 +104,7 @@ export default function YachtOverviewPage({ params }: { params: { id: string } }
                       <tr key={field.id}>
                         <td>{field.displayName}</td>
                         <td>{field.value}</td>
-                        <td>{field.unit || '-'}</td>
+                        <td>{field.unit || "-"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -86,13 +117,21 @@ export default function YachtOverviewPage({ params }: { params: { id: string } }
             <h3>Claims</h3>
             <div className="grid" style={{ gap: 12 }}>
               {data.claims.map((claim: any) => (
-                <Link key={claim.id} href={`/claims/${claim.id}`} className="list-row">
+                <Link
+                  key={claim.id}
+                  href={`/claims/${claim.id}`}
+                  className="list-row"
+                >
                   <div>
                     <strong>{claim.title}</strong>
                     <div className="muted">{claim.id}</div>
                   </div>
-                  <span className={`badge status-${claim.status}`}>{claim.status}</span>
-                  <span className={`badge priority-${claim.priority}`}>{claim.priority}</span>
+                  <span className={`badge status-${claim.status}`}>
+                    {claim.status}
+                  </span>
+                  <span className={`badge priority-${claim.priority}`}>
+                    {claim.priority}
+                  </span>
                 </Link>
               ))}
             </div>

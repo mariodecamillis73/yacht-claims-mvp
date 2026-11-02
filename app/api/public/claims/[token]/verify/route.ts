@@ -13,8 +13,9 @@ import {
 import { sendCode } from "@/lib/mail";
 export async function POST(
   request: Request,
-  { params }: { params: { token: string } },
+  context: { params: Promise<{ token: string }> },
 ) {
+  const params = await context.params;
   try {
     mutation(request);
     const g = await db.claimGrant.findUnique({

@@ -3,8 +3,9 @@ import { documentResponse } from "@/lib/claim-content";
 export const dynamic = "force-dynamic";
 export async function GET(
   request: Request,
-  { params }: { params: { id: string; documentId: string } },
+  context: { params: Promise<{ id: string; documentId: string }> },
 ) {
+  const params = await context.params;
   try {
     const a = await claimAccess(request, params.id);
     const id = params.id;

@@ -4,7 +4,7 @@ Next.js application with persistent claims and server-enforced access controls.
 
 ## Setup
 
-Use Node.js 20+ and a persistent SQLite database (single application instance).
+Use Node.js 22 or 24 and a persistent SQLite database (single application instance).
 
 1. `npm ci`
 2. Copy `.env.example` to `.env` and configure `DATABASE_URL` and a random `JWT_SECRET` of at least 32 characters. Generate the secret with `openssl rand -hex 48`.
@@ -55,4 +55,4 @@ The access test creates a disposable database through migrations and a local SMT
 
 ## Before production deployment
 
-This is an access-control milestone, not the final release. Remaining work includes dependency security upgrades, browser/mobile verification, account activation/password reset, full claim creation/status UI, audit coverage for all mutations, malware scanning/quotas, automated backups/restore tests, operational monitoring and an agreed hosting/domain/SMTP configuration. Use one instance with a persistent disk for SQLite; multiple instances require a shared database and storage design. Configure request-size limits at the reverse proxy. Do not deploy the development database or test credentials.
+This is a staging-preparation milestone, not the final release. See [STAGING_DEPLOYMENT.md](STAGING_DEPLOYMENT.md) for the Render configuration and publication prerequisites. Remaining work includes browser/mobile verification, account activation/password reset, full claim creation/status UI, audit coverage for all mutations, malware scanning/quotas, automated backups/restore tests, operational monitoring and an agreed hosting/domain/SMTP configuration. Use one instance with a persistent disk for SQLite; multiple instances require a shared database and storage design. Configure request-size limits at the reverse proxy. Do not deploy the development database or test credentials.

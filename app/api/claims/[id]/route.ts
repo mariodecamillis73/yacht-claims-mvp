@@ -6,8 +6,9 @@ import { z } from "zod";
 export const dynamic = "force-dynamic";
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
+  const params = await context.params;
   try {
     const a = await claimAccess(request, params.id);
     return NextResponse.json(await claimView(params.id, a.isInternal));
@@ -17,8 +18,9 @@ export async function GET(
 }
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
+  const params = await context.params;
   try {
     mutation(request);
     const a = await claimAccess(request, params.id);

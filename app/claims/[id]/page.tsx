@@ -3,8 +3,10 @@
 import Link from "next/link";
 import ClaimActions from "@/components/claim-actions";
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 
-export default function ClaimPage({ params }: { params: { id: string } }) {
+export default function ClaimPage() {
+  const params = useParams<{ id: string }>();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

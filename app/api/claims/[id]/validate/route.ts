@@ -3,8 +3,9 @@ import { db } from "@/lib/db";
 import { claimAccess, mutation, HttpError, fail } from "@/lib/auth";
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
+  const params = await context.params;
   try {
     mutation(request);
     const a = await claimAccess(request, params.id);

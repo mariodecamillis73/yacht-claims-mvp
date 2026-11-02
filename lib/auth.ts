@@ -56,8 +56,10 @@ export function fail(error: unknown) {
 }
 export function mutation(request: Request) {
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin)
-    throw new HttpError(403, "Invalid origin");
+  const expected = process.env.APP_URL
+    ? new URL(process.env.APP_URL).origin
+    : new URL(request.url).origin;
+  if (origin && origin !== expected) throw new HttpError(403, "Invalid origin");
 }
 export async function user(request: Request) {
   const token =

@@ -1,5 +1,5 @@
 const nextConfig = {
-  experimental: { typedRoutes: false },
+  typedRoutes: false,
   async headers() {
     return [
       {

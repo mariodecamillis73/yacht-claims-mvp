@@ -567,9 +567,104 @@ try {
   const yacht = await req("/api/yachts", {
     cookie: cookies.staff,
     method: "POST",
-    body: { hullNumber: "flow", name: "Workflow test", yearBuilt: 2026 },
+    body: {
+      hullNumber: "flow",
+      name: "Workflow test",
+      yearBuilt: 2026,
+      deliveryDate: "2026-11-02",
+      warrantyYears: 2,
+      technicalProfile: {
+        equipment: Object.fromEntries(
+          [
+            "engine",
+            "genset",
+            "bowThruster",
+            "sternThruster",
+            "propellers",
+            "airConditioning",
+            "watermaker",
+          ].map((key) => [
+            key,
+            {
+              brand: "Brand " + key,
+              model: "Model",
+              power: key === "propellers" ? "" : "10 kW",
+              serialNumber: "SN-" + key,
+            },
+          ]),
+        ),
+        painting: {
+          hullPainting: {
+            brand: "Hull brand",
+            paintType: "Polyurethane",
+            colorCode: "RAL 9010",
+          },
+          deckPainting: {
+            brand: "Deck brand",
+            paintType: "Non-slip",
+            colorCode: "RAL 7035",
+          },
+        },
+      },
+    },
   });
   assert.equal(yacht.status, 201);
+  assert.equal(yacht.data.deliveryDate, "2026-11-02T00:00:00.000Z");
+  assert.equal(yacht.data.warrantyExpiresAt, "2028-11-02T00:00:00.000Z");
+  const profile = (await req("/api/yachts/FLOW", { cookie: cookies.staff }))
+    .data.technicalProfile;
+  assert.deepEqual(profile, yacht.data.technicalProfile);
+  assert.equal(profile.painting.deckPainting.colorCode, "RAL 7035");
+  for (const key of [
+    "engine",
+    "genset",
+    "bowThruster",
+    "sternThruster",
+    "propellers",
+    "airConditioning",
+    "watermaker",
+  ])
+    assert.equal(profile.equipment[key].serialNumber, "SN-" + key);
+  assert.equal(
+    (await req("/api/yachts/FLOW", { cookie: cookies.supplier })).status,
+    404,
+  );
+  assert.equal(
+    (await req("/api/yachts/FLOW", { cookie: cookies.representative })).status,
+    404,
+  );
+  const baseYacht = { hullNumber: "DATE", name: "Date test", yearBuilt: 2024 };
+  for (const fields of [
+    { deliveryDate: "2026-02-30", warrantyYears: 1 },
+    { deliveryDate: "2026-01-01", warrantyYears: 3 },
+    { warrantyYears: 1 },
+    { deliveryDate: "2026-01-01" },
+  ]) {
+    assert.equal(
+      (
+        await req("/api/yachts", {
+          cookie: cookies.staff,
+          method: "POST",
+          body: { ...baseYacht, ...fields },
+        })
+      ).status,
+      400,
+    );
+  }
+  const leap = await req("/api/yachts", {
+    cookie: cookies.staff,
+    method: "POST",
+    body: { ...baseYacht, deliveryDate: "2024-02-29", warrantyYears: 1 },
+  });
+  assert.equal(leap.status, 201);
+  assert.equal(leap.data.warrantyExpiresAt, "2025-02-28T00:00:00.000Z");
+  // Existing yachts stay readable after the additive migration, with no invented delivery date.
+  const legacyRow = await db.yacht.findFirst({
+    where: { hullNumber: { notIn: ["FLOW", "DATE"] } },
+  });
+  assert.equal(legacyRow.deliveryDate, null);
+  assert.equal(legacyRow.warrantyExpiresAt, null);
+
   assert.equal(
     (
       await req("/api/yachts", {

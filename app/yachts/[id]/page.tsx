@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { EQUIPMENT, PAINTING } from "@/lib/yacht-profile";
 export default function YachtOverviewPage() {
   const params = useParams<{ id: string }>();
   const [data, setData] = useState<any>(null);
@@ -95,9 +96,48 @@ export default function YachtOverviewPage() {
             <h3>Yacht details</h3>
             <p>Hull number: {data.hullNumber}</p>
             <p>Year built: {data.yearBuilt}</p>
+            <p>
+              Delivery to customer:{" "}
+              {data.deliveryDate?.slice(0, 10) || "Not specified"}
+            </p>
+            <p>
+              Yacht warranty:{" "}
+              {data.warrantyYears
+                ? `${data.warrantyYears} year(s)`
+                : "Not specified"}
+            </p>
+            <p>
+              Warranty expiry:{" "}
+              {data.warrantyExpiresAt?.slice(0, 10) || "Not specified"}
+            </p>
             <p>Captain: {data.captainName || "Not specified"}</p>
             <p>Owner / company: {data.ownerId || "Not specified"}</p>
             <p>Photos and documents can be added to each claim.</p>
+            <h3>Equipment</h3>
+            {EQUIPMENT.map(([key, title]) => {
+              const item = data.technicalProfile?.equipment?.[key];
+              return (
+                <section key={key} className="section">
+                  <h4>{title}</h4>
+                  <p>Brand: {item?.brand || "—"}</p>
+                  <p>Model: {item?.model || "—"}</p>
+                  {key !== "propellers" && <p>Power: {item?.power || "—"}</p>}
+                  <p>Serial Nr: {item?.serialNumber || "—"}</p>
+                </section>
+              );
+            })}
+            <h3>Painting systems</h3>
+            {PAINTING.map(([key, title]) => {
+              const item = data.technicalProfile?.painting?.[key];
+              return (
+                <section key={key} className="section">
+                  <h4>{title}</h4>
+                  <p>Product brand: {item?.brand || "—"}</p>
+                  <p>Paint type: {item?.paintType || "—"}</p>
+                  <p>Color code: {item?.colorCode || "—"}</p>
+                </section>
+              );
+            })}
           </div>
 
           <div className="section">

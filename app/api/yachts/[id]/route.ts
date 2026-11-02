@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { user, yachtAllowed, internal, HttpError, fail } from "@/lib/auth";
+import { yachtResponse } from "@/lib/yacht-profile";
 export const dynamic = "force-dynamic";
 export async function GET(
   request: Request,
@@ -23,10 +24,9 @@ export async function GET(
     });
     if (!y) throw new HttpError(404, "Yacht not found");
     return NextResponse.json({
-      ...y,
+      ...yachtResponse(y),
       id: y.hullNumber,
       yachtNumber: y.hullNumber,
-      technicalProfile: [],
       documents: [],
     });
   } catch (e) {

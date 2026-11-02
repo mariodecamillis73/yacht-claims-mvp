@@ -28,6 +28,6 @@ services:
       - key: ADMIN_EMAIL
         sync: false
       - key: ADMIN_PASSWORD
-        sync: false
+        generateValue: true
 # Optional SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASSWORD/MAIL_FROM must be added as runtime secrets.
 # APP_URL is derived from Render's RENDER_EXTERNAL_URL. No production records are imported.

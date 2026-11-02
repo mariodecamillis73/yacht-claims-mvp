@@ -8,6 +8,7 @@ import {
   mutation,
   sessionCookie,
   signToken,
+  hash,
 } from "@/lib/auth";
 export async function POST(request: Request) {
   try {
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
         language: actor.language,
       },
     });
-    sessionCookie(response, COOKIE, signToken({ sub: actor.id, kind: "user" }));
+    sessionCookie(response, COOKIE, signToken({ sub: actor.id, kind: "user", credentialVersion: hash(actor.passwordHash) }));
     return response;
   } catch (e) {
     return fail(e);

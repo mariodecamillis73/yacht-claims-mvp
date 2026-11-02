@@ -76,6 +76,8 @@ export async function user(request: Request) {
     throw new HttpError(401, "Invalid session");
   const result = await db.user.findUnique({ where: { id: payload.sub } });
   if (!result?.isActive) throw new HttpError(401, "Account unavailable");
+  if (payload.credentialVersion !== hash(result.passwordHash))
+    throw new HttpError(401, "Sign in again after credential update");
   return result;
 }
 export async function yachtAllowed(

@@ -125,8 +125,20 @@ try {
     headers: { cookie: login.cookie, Origin: env.APP_URL },
   });
   assert.equal(logout.status, 200);
+  const oldCookie = login.cookie;
+  const rotation = { ADMIN_ROTATE_FROM_EMAIL: env.ADMIN_EMAIL, ADMIN_EMAIL: 'updated@example.invalid', ADMIN_PASSWORD: 'Test-rotate-99@', ADMIN_ROTATION_ID: 'test-once' };
+  await stop();
+  await start(rotation);
+  assert.equal((await request('/api/claims','GET',undefined,oldCookie)).status,401);
+  assert.equal((await request('/api/auth/login','POST',{email:env.ADMIN_EMAIL,password:env.ADMIN_PASSWORD})).status,401);
+  assert.equal((await request('/api/auth/login','POST',{email:rotation.ADMIN_EMAIL,password:rotation.ADMIN_PASSWORD})).status,200);
+  await stop();
+  await start({...rotation,ADMIN_PASSWORD:'Ignore-this-on-restart'});
+  login = await request('/api/auth/login','POST',{email:rotation.ADMIN_EMAIL,password:rotation.ADMIN_PASSWORD});
+  assert.equal(login.status,200);
+  assert.equal((await request('/api/claims','GET',undefined,login.cookie)).data.length,1);
   console.log(
-    "PASS: hosted migrations, secure configuration checks, first-director provisioning, health check, restart persistence, no password reset, canonical-origin CSRF validation.",
+    "PASS: hosted migrations, secure configuration checks, first-director provisioning, health check, restart persistence, no password reset, canonical-origin CSRF validation, one-time director credential rotation and old-session revocation.",
   );
 } finally {
   await stop();

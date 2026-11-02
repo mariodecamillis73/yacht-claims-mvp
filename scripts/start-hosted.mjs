@@ -3,6 +3,7 @@ import { mkdir, open } from "node:fs/promises";
 import { dirname, isAbsolute } from "node:path";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { rotateDirector } from "./admin-maintenance.mjs";
 
 // Never log environment values or account credentials.
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
@@ -31,6 +32,7 @@ execFileSync(
 );
 const db = new PrismaClient();
 try {
+  if (await rotateDirector(db)) console.log("Requested director credential update completed.");
   const activeDirectors = await db.user.count({
     where: { role: "director", isActive: true },
   });

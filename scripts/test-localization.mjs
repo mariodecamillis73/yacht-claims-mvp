@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import ts from "typescript";
-import { execFileSync } from "node:child_process";
+import { join } from "node:path";
 function load(path) {
   const source = fs.readFileSync(path, "utf8");
   const output = ts.transpileModule(source, {
@@ -41,12 +41,13 @@ for (const lang of ["it", "es", "de"]) {
     }).includes("TEST"),
   );
 }
-const files = execFileSync("rg", ["--files", "app", "components"], {
-  encoding: "utf8",
-})
-  .trim()
-  .split("\n")
-  .filter((f) => f.endsWith(".tsx"));
+function sourceFiles(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap(item => {
+    const path = join(directory, item.name);
+    return item.isDirectory() ? sourceFiles(path) : path.endsWith(".tsx") ? [path] : [];
+  });
+}
+const files = [...sourceFiles("app"), ...sourceFiles("components")];
 const allowed = new Set([
   "YY ASM",
   "Yacht Claims MVP",

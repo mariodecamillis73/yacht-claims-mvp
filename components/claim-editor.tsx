@@ -11,7 +11,7 @@ export default function ClaimEditor({
   claim: any;
   onChange: () => void;
 }) {
-  const { t } = useLanguage();
+  const { t, tr, language } = useLanguage();
   const [team, setTeam] = useState<any[]>([]),
     [suppliers, setSuppliers] = useState<any[]>([]);
   const [form, setForm] = useState({
@@ -77,7 +77,7 @@ export default function ClaimEditor({
     <details className="section">
       <summary>{t("editClaim")}</summary>
       <form onSubmit={save} className="form-grid">
-        {error && <p role="alert">{error}</p>}
+        {error && <p role="alert">{tr(error)}</p>}
         {saved && <p role="status">{t("saved")}</p>}
         <fieldset disabled={busy} className="form-grid">
           <label>
@@ -132,7 +132,7 @@ export default function ClaimEditor({
               {form.assignedTo &&
                 !team.some((u) => u.id === form.assignedTo) && (
                   <option value={form.assignedTo}>
-                    Inactive member — choose another
+                    {tr("Inactive member — choose another")}
                   </option>
                 )}
             </select>
@@ -153,9 +153,10 @@ export default function ClaimEditor({
             </select>
           </label>
           <p>
-            Supplier assignment records responsibility. To grant access, use
-            Share this claim separately.{" "}
-            <Link href="/suppliers">Supplier directory</Link>
+            {tr(
+              "Supplier assignment records responsibility. To grant access, use Share this claim separately.",
+            )}{" "}
+            <Link href="/suppliers">{tr("Supplier directory")}</Link>
           </p>
           <label>
             {t("warranty")}
@@ -167,10 +168,10 @@ export default function ClaimEditor({
               }
             >
               {[
-                ["pending", "Pending assessment"],
-                ["covered", "Covered"],
-                ["not_covered", "Not covered"],
-                ["goodwill", "Goodwill"],
+                ["pending", tr("Pending assessment")],
+                ["covered", tr("Covered")],
+                ["not_covered", tr("Not covered")],
+                ["goodwill", tr("Goodwill")],
               ].map(([v, label]) => (
                 <option key={v} value={v}>
                   {t(v as "pending" | "covered" | "not_covered" | "goodwill")}

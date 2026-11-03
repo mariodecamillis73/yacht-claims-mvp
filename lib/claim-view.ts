@@ -1,5 +1,10 @@
 import { db } from "./db";
-export async function claimView(id: string, isInternal: boolean) {
+import { claimScope, ClaimActor } from "./claim-scope";
+export async function claimView(
+  id: string,
+  isInternal: boolean,
+  actor?: ClaimActor,
+) {
   const claim = await db.claim.findUnique({
     where: { id },
     select: {
@@ -47,12 +52,24 @@ export async function claimView(id: string, isInternal: boolean) {
         orderBy: { createdAt: "asc" },
       })
     : [];
+  const neighbors =
+    actor && claim
+      ? await db.claim.findMany({
+          where: await claimScope(actor),
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          select: { id: true },
+        })
+      : [];
+  const index = neighbors.findIndex((item) => item.id === id);
   return {
     activity,
     claim,
     comments,
     documents,
-    previousClaimId: null,
-    nextClaimId: null,
+    previousClaimId: index > 0 ? neighbors[index - 1].id : null,
+    nextClaimId:
+      index >= 0 && index + 1 < neighbors.length
+        ? neighbors[index + 1].id
+        : null,
   };
 }

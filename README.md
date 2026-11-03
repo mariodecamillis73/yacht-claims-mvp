@@ -69,7 +69,7 @@ Work Hub: All; My work (assigned to or created by the current actor); Overdue (p
 
 ## Localization
 
-Typed dictionaries (`lib/i18n.ts`) and a React provider support EN/IT/ES/DE for Work Hub and primary claim editing/workflow controls. Selection is stored in this browser. Some secondary forms/errors remain English. This is localization-ready architecture, not a claim of complete translation.
+Typed dictionaries (`lib/i18n.ts`) and a React provider support EN/IT/ES/DE for Work Hub and primary claim editing/workflow controls. Selection is stored in this browser. The prototype alignment extends source-label translations to every application screen, statuses/roles, validation messages and parameterized UI notices. User-authored text, company names, technical values and file names are never automatically translated. See docs/PROTOTYPE_ALIGNMENT.md.
 
 ## Database and attachment backup
 

@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/components/language-provider";
 
 import Link from "next/link";
 import ClaimActions from "@/components/claim-actions";
@@ -7,6 +8,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
 export default function ClaimPage() {
+  const { tr, language } = useLanguage();
+
   const params = useParams<{ id: string }>();
   const [role, setRole] = useState("");
   const [data, setData] = useState<any>(null);
@@ -29,21 +32,23 @@ export default function ClaimPage() {
       .catch(() => setLoading(false));
   }, [params.id]);
 
-  if (loading) return <div className="container">Loading claim...</div>;
-  if (!data) return <div className="container">Claim not found.</div>;
+  if (loading) return <div className="container">{tr("Loading claim...")}</div>;
+  if (!data) return <div className="container">{tr("Claim not found.")}</div>;
 
   return (
     <>
       <div className="topbar">
         <div>Yacht Claims MVP</div>
         <nav>
-          <Link href="/workhub">Work Hub</Link>
+          <Link href="/workhub">{tr("Work Hub")}</Link>
           {["director", "staff", "representative"].includes(role) && (
             <Link href={`/yachts/${data.claim.yachtHullNumber}`}>
-              Yacht Overview
+              {tr("Yacht Overview")}
             </Link>
           )}
-          {role === "representative" && <Link href="/my-yacht">My Yacht</Link>}
+          {role === "representative" && (
+            <Link href="/my-yacht">{tr("My Yacht")}</Link>
+          )}
         </nav>
       </div>
 
@@ -54,79 +59,106 @@ export default function ClaimPage() {
               <h2>{data.claim.title}</h2>
               <div className="muted">
                 {data.claim.id} •{" "}
-                {STATUS_LABELS[data.claim.status] || data.claim.status}
+                {tr(STATUS_LABELS[data.claim.status] || data.claim.status)}
               </div>
             </div>
-            <div
-              className="claim-header-actions"
-              hidden={!data.previousClaimId && !data.nextClaimId}
-            >
-              <Link
-                href={
-                  data.previousClaimId ? `/claims/${data.previousClaimId}` : "#"
-                }
-                className="button secondary"
-              >
-                Previous
-              </Link>
-              <Link
-                href={data.nextClaimId ? `/claims/${data.nextClaimId}` : "#"}
-                className="button"
-              >
-                Next
-              </Link>
+            <div className="claim-header-actions">
+              {data.previousClaimId ? (
+                <Link
+                  href={`/claims/${data.previousClaimId}`}
+                  className="button secondary"
+                >
+                  {tr("Previous")}
+                </Link>
+              ) : (
+                <button className="button secondary" disabled>
+                  {tr("Previous")}
+                </button>
+              )}
+              {data.nextClaimId ? (
+                <Link href={`/claims/${data.nextClaimId}`} className="button">
+                  {tr("Next")}
+                </Link>
+              ) : (
+                <button className="button" disabled>
+                  {tr("Next")}
+                </button>
+              )}
             </div>
           </div>
 
           <div className="grid grid-3">
             <div className="summary-card">
-              <span className="muted">Yacht</span>
+              <span className="muted">{tr("Yacht")}</span>
               <strong>{data.claim.yachtHullNumber}</strong>
             </div>
             <div className="summary-card">
-              <span className="muted">Priority</span>
-              <strong>{data.claim.priority}</strong>
+              <span className="muted">{tr("Priority")}</span>
+              <strong>{tr(data.claim.priority)}</strong>
             </div>
             <div className="summary-card">
-              <span className="muted">Warranty</span>
-              <strong>{data.claim.warrantyStatus || "—"}</strong>
+              <span className="muted">{tr("Warranty")}</span>
+              <strong>{tr(data.claim.warrantyStatus || "—")}</strong>
             </div>
           </div>
         </div>
 
         <div className="layout-grid">
           <div className="section">
-            <h3>Description</h3>
+            <h3>{tr("Description")}</h3>
             <p style={{ whiteSpace: "pre-wrap" }}>{data.claim.description}</p>
             {data.claim.dueDate && (
-              <p>Target completion: {data.claim.dueDate.slice(0, 10)} (UTC)</p>
+              <p>
+                {tr("Target completion:")}
+                {data.claim.dueDate.slice(0, 10)} (UTC)
+              </p>
             )}
             {data.claim.closedAt && (
-              <p>Closed: {new Date(data.claim.closedAt).toLocaleString()}</p>
+              <p>
+                {tr("Closed:")}
+                {new Date(data.claim.closedAt).toLocaleString(language)}
+              </p>
             )}
             {data.claim.rejectedReason && (
-              <p>Rejection reason: {data.claim.rejectedReason}</p>
+              <p>
+                {tr("Rejection reason:")}
+                {data.claim.rejectedReason}
+              </p>
             )}
             {!!data.activity?.length && (
               <section>
-                <h3>Internal history</h3>
+                <h3>{tr("Internal history")}</h3>
                 {data.activity.map((entry: any) => (
                   <p key={entry.id}>
-                    <small>{new Date(entry.createdAt).toLocaleString()}</small>{" "}
-                    · {entry.details}
+                    <small>
+                      {new Date(entry.createdAt).toLocaleString(language)}
+                    </small>{" "}
+                    ·{" "}
+                    {entry.action === "status_changed"
+                      ? entry.details
+                          .split(" → ")
+                          .map((label: string) => tr(label))
+                          .join(" → ")
+                      : entry.action === "updated"
+                        ? tr("Claim details updated")
+                        : entry.action === "approved"
+                          ? tr("Director approval")
+                          : entry.action === "created"
+                            ? tr("Claim submitted for director validation")
+                            : entry.details}
                   </p>
                 ))}
               </section>
             )}
 
             <div style={{ marginTop: 18 }}>
-              <h3>Comments</h3>
+              <h3>{tr("Comments")}</h3>
               <div className="grid" style={{ gap: 12 }}>
                 {data.comments.map((comment: any) => (
                   <div key={comment.id} className="comment">
                     <div className="muted">
-                      {comment.visibility} • {comment.userId} •{" "}
-                      {new Date(comment.createdAt).toLocaleString()}
+                      {tr(comment.visibility)} • {comment.userId} •{" "}
+                      {new Date(comment.createdAt).toLocaleString(language)}
                     </div>
                     <div style={{ marginTop: 8 }}>{comment.message}</div>
                   </div>
@@ -149,7 +181,7 @@ export default function ClaimPage() {
                   .catch(() => setData(null));
               }}
             />
-            <h3>Photos and documents</h3>
+            <h3>{tr("Photos and documents")}</h3>
             {data.documents.map((d: any) => (
               <div key={d.id}>
                 {d.mimeType.startsWith("image/") && (
@@ -167,7 +199,7 @@ export default function ClaimPage() {
                   >
                     {d.fileName}
                   </a>{" "}
-                  · {d.visibility}
+                  · {tr(d.visibility)}
                 </p>
               </div>
             ))}

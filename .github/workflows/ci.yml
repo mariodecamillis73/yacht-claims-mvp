@@ -28,3 +28,4 @@ jobs:
       - run: npm run test:access
       - run: npm run test:hosted
       - run: npm run test:backup
+      - run: npm run test:localization

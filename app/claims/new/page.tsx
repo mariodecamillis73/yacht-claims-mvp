@@ -1,9 +1,12 @@
 "use client";
+import { useLanguage } from "@/components/language-provider";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 type Yacht = { hullNumber: string; name: string };
 export default function NewClaim() {
+  const { tr, language } = useLanguage();
+
   const router = useRouter();
   const [yachts, setYachts] = useState<Yacht[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +54,9 @@ export default function NewClaim() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (files.some((f) => f.size > 5 * 1024 * 1024 || !f.size)) {
-      setError("Each attachment must be non-empty and no larger than 5 MB.");
+      setError(
+        tr("Each attachment must be non-empty and no larger than 5 MB."),
+      );
       return;
     }
     setBusy(true);
@@ -87,7 +92,10 @@ export default function NewClaim() {
       setFiles(failed);
       if (failed.length) {
         setError(
-          `The claim was saved, but ${failed.length} attachment(s) could not be uploaded. Retry the remaining files below or open the claim.`,
+          tr(
+            "The claim was saved, but {count} attachment(s) could not be uploaded. Retry the remaining files below or open the claim.",
+            { count: failed.length },
+          ),
         );
         return;
       }
@@ -101,26 +109,26 @@ export default function NewClaim() {
   return (
     <main className="container page-shell">
       <nav className="inline-actions">
-        <Link href="/workhub">Work Hub</Link>
-        <Link href="/yachts">Yachts</Link>
+        <Link href="/workhub">{tr("Work Hub")}</Link>
+        <Link href="/yachts">{tr("Yachts")}</Link>
       </nav>
-      <h1>New claim</h1>
-      {error && <p role="alert">{error}</p>}
+      <h1>{tr("New claim")}</h1>
+      {error && <p role="alert">{tr(error)}</p>}
       {loading ? (
-        <p>Loading…</p>
+        <p>{tr("Loading…")}</p>
       ) : (
         allowed &&
         (!yachts.length ? (
           <p>
-            No yacht assigned or available.{" "}
-            <Link href="/yachts">Open yachts</Link> or ask the yard to assign
-            your yacht.
+            {tr("No yacht assigned or available.")}{" "}
+            <Link href="/yachts">{tr("Open yachts")}</Link>{" "}
+            {tr("or ask the yard to assign your yacht.")}
           </p>
         ) : (
           <form className="section form-grid" onSubmit={submit}>
             <fieldset disabled={busy || !!createdId} className="form-grid">
               <label>
-                Yacht
+                {tr("Yacht")}
                 <select
                   className="input"
                   required
@@ -137,7 +145,7 @@ export default function NewClaim() {
                 </select>
               </label>
               <label>
-                Title
+                {tr("Title")}
                 <input
                   className="input"
                   required
@@ -147,7 +155,7 @@ export default function NewClaim() {
                 />
               </label>
               <label>
-                Description
+                {tr("Description")}
                 <textarea
                   className="textarea"
                   required
@@ -160,7 +168,7 @@ export default function NewClaim() {
                 />
               </label>
               <label>
-                Priority
+                {tr("Priority")}
                 <select
                   className="input"
                   value={form.priority}
@@ -176,7 +184,9 @@ export default function NewClaim() {
             </fieldset>
             {!createdId && (
               <label>
-                Photos and documents (optional, max 5 MB each, up to 10 files)
+                {tr(
+                  "Photos and documents (optional, max 5 MB each, up to 10 files)",
+                )}
                 <input
                   type="file"
                   multiple
@@ -184,7 +194,7 @@ export default function NewClaim() {
                   onChange={(e) => {
                     const list = Array.from(e.target.files || []);
                     if (list.length > 10) {
-                      setError("Select no more than 10 attachments.");
+                      setError(tr("Select no more than 10 attachments."));
                       e.target.value = "";
                       setFiles([]);
                     } else {
@@ -197,7 +207,7 @@ export default function NewClaim() {
             )}
             {internal && (
               <label>
-                Attachment visibility
+                {tr("Attachment visibility")}
                 <select
                   className="input"
                   disabled={busy || !!createdId}
@@ -205,9 +215,9 @@ export default function NewClaim() {
                   onChange={(e) => setVisibility(e.target.value)}
                 >
                   <option value="shared">
-                    Shared with authorized participants
+                    {tr("Shared with authorized participants")}
                   </option>
-                  <option value="internal">Internal to yard</option>
+                  <option value="internal">{tr("Internal to yard")}</option>
                 </select>
               </label>
             )}
@@ -221,23 +231,24 @@ export default function NewClaim() {
               </ul>
             )}
             <p>
-              The claim starts as New / Pending director validation. Attachments
-              follow the visibility selected above.
+              {tr(
+                "The claim starts as New / Pending director validation. Attachments follow the visibility selected above.",
+              )}
             </p>
             <div className="inline-actions">
               <button className="button" disabled={busy}>
                 {busy
-                  ? "Saving…"
+                  ? tr("Saving…")
                   : createdId
-                    ? "Retry remaining attachments"
-                    : "Create claim"}
+                    ? tr("Retry remaining attachments")
+                    : tr("Create claim")}
               </button>
               {createdId && (
                 <Link
                   className="button secondary"
                   href={`/claims/${createdId}`}
                 >
-                  Open saved claim
+                  {tr("Open saved claim")}
                 </Link>
               )}
             </div>

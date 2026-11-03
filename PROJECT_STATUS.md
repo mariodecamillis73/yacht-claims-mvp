@@ -1,3 +1,9 @@
+# Prototype is the primary reference — 3 November 2026
+
+The owner confirmed the version containing Prev/Next and EN/IT/ES/DE as authoritative. See [docs/PROTOTYPE_ALIGNMENT.md](docs/PROTOTYPE_ALIGNMENT.md) for the source comparison, restored controls and verification boundaries. Previous summaries must not substitute for the prototype. Current corrections include authorized Prev/Next navigation, four-language UI label wiring throughout the application, prototype card/list-row layouts, technical custom fields with units and protected yacht-level documents. User-authored content and existing data are preserved.
+
+---
+
 # YY ASM — current project status (2 November 2026)
 
 This file replaces the accumulated status notes. Historical notes are retained in [docs/PROJECT_HISTORY_2026-11-02.md](docs/PROJECT_HISTORY_2026-11-02.md). The original MVP brief remains on `main` (GitHub blob `599fb27d3af4aef3a94e12d75dbcfa25254cf464`). Source/deployment branch: `feature/staging-ready`; `main` has not been overwritten.
@@ -14,7 +20,7 @@ This file replaces the accumulated status notes. Historical notes are retained i
 | Customer / My Yacht | Real assigned yachts, links to claims, create claims, shared comments and protected files | Representative access tests; no mock substitution |
 | Supplier portal | Specific-email, expiring/revocable per-claim links; guest email-code verification; shared comments and uploads/downloads | Local SMTP integration passes; real delivery requires authorized SMTP configuration |
 | Supplier data | Director-maintained supplier directory; yard users can select supplier and responsible team member on a claim | Directory and assignment permissions tested; assignment alone NEVER grants access |
-| Localization-ready structure / Localization roadmap | Typed EN/IT/ES/DE dictionaries, app language selector with local preference, translated Work Hub and primary claim management controls | Build checked. Technical yacht forms, some secondary labels and server errors remain English; a fully translated UI is not claimed |
+| Localization-ready structure / Localization roadmap | Typed EN/IT/ES/DE dictionaries, app language selector with local preference, translated Work Hub and primary claim management controls | Build checked. Superseded by prototype alignment: translations are wired across application screens; user-authored text is unchanged |
 | Styling / UX foundation | Existing app styling retained; responsive dashboard and forms | Build verified; complete authenticated browser/mobile acceptance remains pending |
 | Mock data and initial APIs | Production pages use persistent scoped APIs; historical fixtures are not used as a live fallback | Source inspection and integration tests |
 | QA and deployment | Next.js CI, build/typecheck, disposable access/hosted/backup suites, Render persistent single-instance deployment | Live rollout must be verified for each source commit; no original Mac records auto-imported |

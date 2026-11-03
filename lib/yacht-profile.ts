@@ -25,9 +25,17 @@ export type PaintDetails = {
 export type TechnicalProfile = {
   equipment: Record<string, EquipmentDetails>;
   painting: Record<string, PaintDetails>;
+  customFields: {
+    id: string;
+    section: string;
+    name: string;
+    value: string;
+    unit: string;
+  }[];
 };
 export function emptyTechnicalProfile(): TechnicalProfile {
   return {
+    customFields: [],
     equipment: Object.fromEntries(
       EQUIPMENT.map(([key]) => [
         key,

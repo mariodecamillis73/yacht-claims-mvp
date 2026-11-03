@@ -12,7 +12,7 @@ export async function GET(
   const params = await context.params;
   try {
     const a = await claimAccess(request, params.id);
-    return NextResponse.json(await claimView(params.id, a.isInternal));
+    return NextResponse.json(await claimView(params.id, a.isInternal, a.actor));
   } catch (e) {
     return fail(e);
   }

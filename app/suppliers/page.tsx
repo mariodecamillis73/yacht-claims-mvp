@@ -1,7 +1,10 @@
 "use client";
+import { useLanguage } from "@/components/language-provider";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 export default function Suppliers() {
+  const { tr, language } = useLanguage();
+
   const empty = { name: "", companyName: "", email: "", phone: "" };
   const [rows, setRows] = useState<any[]>([]),
     [form, setForm] = useState(empty),
@@ -43,19 +46,19 @@ export default function Suppliers() {
   }
   return (
     <main className="container page-shell">
-      <Link href="/workhub">Work Hub</Link>
-      <h1>Supplier directory</h1>
-      {error && <p role="alert">{error}</p>}
+      <Link href="/workhub">{tr("Work Hub")}</Link>
+      <h1>{tr("Supplier directory")}</h1>
+      {error && <p role="alert">{tr(error)}</p>}
       {role === "director" && (
         <form className="section form-grid" onSubmit={submit}>
-          <h2>{id ? "Edit supplier" : "New supplier"}</h2>
+          <h2>{id ? tr("Edit supplier") : tr("New supplier")}</h2>
           <fieldset disabled={busy} className="form-grid">
             {(
               [
-                ["name", "Contact name"],
-                ["companyName", "Company"],
-                ["email", "Email"],
-                ["phone", "Phone (optional)"],
+                ["name", tr("Contact name")],
+                ["companyName", tr("Company")],
+                ["email", tr("Email")],
+                ["phone", tr("Phone (optional)")],
               ] as const
             ).map(([key, label]) => (
               <label key={key}>
@@ -72,7 +75,7 @@ export default function Suppliers() {
                 />
               </label>
             ))}
-            <button className="button">Save supplier</button>
+            <button className="button">{tr("Save supplier")}</button>
             {id && (
               <button
                 type="button"
@@ -82,7 +85,7 @@ export default function Suppliers() {
                   setForm(empty);
                 }}
               >
-                Cancel
+                {tr("Cancel")}
               </button>
             )}
           </fieldset>
@@ -108,13 +111,13 @@ export default function Suppliers() {
                 window.scrollTo(0, 0);
               }}
             >
-              Edit supplier
+              {tr("Edit supplier")}
             </button>
           )}
         </section>
       ))}
       {!rows.length && ["director", "staff"].includes(role) && (
-        <p>No suppliers registered.</p>
+        <p>{tr("No suppliers registered.")}</p>
       )}
     </main>
   );

@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/components/language-provider";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -18,6 +19,8 @@ type Yacht = {
   warrantyExpiresAt?: string;
 };
 export default function YachtsPage({ editHull }: { editHull?: string }) {
+  const { tr, language } = useLanguage();
+
   const router = useRouter();
   const [revision, setRevision] = useState("");
   const [editReady, setEditReady] = useState(false);
@@ -44,8 +47,8 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
     if (!r.ok)
       throw new Error(
         r.status === 401
-          ? "Please sign in to view yachts"
-          : "Unable to load yachts",
+          ? tr("Please sign in to view yachts")
+          : tr("Unable to load yachts"),
       );
     setYachts(await r.json());
   }
@@ -72,6 +75,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
             ...profile.painting[key],
             ...y.technicalProfile?.painting?.[key],
           };
+        profile.customFields = y.technicalProfile?.customFields || [];
         setForm({
           hullNumber: y.hullNumber,
           name: y.name,
@@ -121,7 +125,12 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
       }
       setForm(empty);
       setOpen(false);
-      setSuccess(`Yacht ${b.name} (${b.hullNumber}) created.`);
+      setSuccess(
+        tr("Yacht {name} ({hull}) created.", {
+          name: b.name,
+          hull: b.hullNumber,
+        }),
+      );
       await load();
     } catch (e) {
       setError((e as Error).message);
@@ -132,37 +141,37 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
   return (
     <main className="container page-shell">
       <nav className="inline-actions">
-        <Link href="/workhub">Work Hub</Link>
-        <Link href="/my-yacht">My yachts</Link>
-        {role === "director" && <Link href="/users">Users</Link>}
+        <Link href="/workhub">{tr("Work Hub")}</Link>
+        <Link href="/my-yacht">{tr("My yachts")}</Link>
+        {role === "director" && <Link href="/users">{tr("Users")}</Link>}
       </nav>
       <div className="section-header">
-        <h1>{editHull ? "Edit yacht" : "Yachts"}</h1>
+        <h1>{editHull ? tr("Edit yacht") : tr("Yachts")}</h1>
         {!editHull && ["director", "staff"].includes(role) && (
           <button className="button" onClick={() => setOpen(!open)}>
-            {open ? "Cancel" : "New yacht"}
+            {open ? tr("Cancel") : tr("New yacht")}
           </button>
         )}
       </div>
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{tr(error)}</p>}
       {success && <p role="status">{success}</p>}
       {editHull && (
         <Link href={`/yachts/${encodeURIComponent(editHull)}`}>
-          Cancel / Back to yacht
+          {tr("Cancel / Back to yacht")}
         </Link>
       )}
       {open && (!editHull || editReady) && (
         <form className="section form-grid" onSubmit={submit}>
-          <h2>{editHull ? "Edit yacht details" : "New yacht"}</h2>
+          <h2>{editHull ? tr("Edit yacht details") : tr("New yacht")}</h2>
           <fieldset disabled={busy} className="form-grid">
             <label>
-              Hull number
+              {tr("Hull number")}
               <input
                 className="input"
                 required
                 maxLength={50}
                 pattern="[A-Za-z0-9][A-Za-z0-9._\-]*"
-                title="Letters, numbers, dots, hyphens and underscores"
+                title={tr("Letters, numbers, dots, hyphens and underscores")}
                 value={form.hullNumber}
                 onChange={(e) =>
                   setForm({ ...form, hullNumber: e.target.value })
@@ -170,7 +179,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
               />
             </label>
             <label>
-              Yacht name
+              {tr("Yacht name")}
               <input
                 className="input"
                 required
@@ -180,7 +189,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
               />
             </label>
             <label>
-              Year built
+              {tr("Year built")}
               <input
                 type="number"
                 className="input"
@@ -194,7 +203,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
               />
             </label>
             <label>
-              Captain (optional)
+              {tr("Captain (optional)")}
               <input
                 className="input"
                 maxLength={200}
@@ -205,7 +214,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
               />
             </label>
             <label>
-              Owner / company (optional)
+              {tr("Owner / company (optional)")}
               <input
                 className="input"
                 maxLength={200}
@@ -214,7 +223,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
               />
             </label>
             <label>
-              Delivery to customer
+              {tr("Delivery to customer")}
               <input
                 className="input"
                 type="date"
@@ -227,7 +236,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
               />
             </label>
             <label>
-              Yacht warranty duration
+              {tr("Yacht warranty duration")}
               <select
                 className="input"
                 value={form.warrantyYears}
@@ -235,12 +244,12 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
                   setForm({ ...form, warrantyYears: Number(e.target.value) })
                 }
               >
-                <option value={1}>1 year</option>
-                <option value={2}>2 years</option>
+                <option value={1}>{tr("1 year")}</option>
+                <option value={2}>{tr("2 years")}</option>
               </select>
             </label>
             <label>
-              Warranty expiry (from delivery)
+              {tr("Warranty expiry (from delivery)")}
               <input
                 className="input"
                 type="date"
@@ -253,24 +262,25 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
               />
             </label>
             <p>
-              Leave delivery blank if the yacht has not yet been delivered.
-              Enter power with its unit, e.g. kW, hp or BTU/h.
+              {tr(
+                "Leave delivery blank if the yacht has not yet been delivered. Enter power with its unit, e.g. kW, hp or BTU/h.",
+              )}
             </p>
             {EQUIPMENT.map(([key, title]) => (
               <fieldset key={key} className="section form-grid">
-                <legend>{title}</legend>
+                <legend>{tr(title)}</legend>
                 {(
                   [
-                    ["brand", "Brand"],
-                    ["model", "Model"],
+                    ["brand", tr("Brand")],
+                    ["model", tr("Model")],
                     ...(key === "propellers"
                       ? []
-                      : [["power", "Power (include unit)"]]),
-                    ["serialNumber", "Serial Nr"],
+                      : [["power", tr("Power (include unit)")]]),
+                    ["serialNumber", tr("Serial Nr")],
                   ] as [string, string][]
                 ).map(([field, label]) => (
                   <label key={field}>
-                    {label}
+                    {tr(label)}
                     <input
                       className="input"
                       maxLength={200}
@@ -301,16 +311,16 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
             ))}
             {PAINTING.map(([key, title]) => (
               <fieldset key={key} className="section form-grid">
-                <legend>{title}</legend>
+                <legend>{tr(title)}</legend>
                 {(
                   [
-                    ["brand", "Product brand"],
-                    ["paintType", "Paint type"],
-                    ["colorCode", "Color code"],
+                    ["brand", tr("Product brand")],
+                    ["paintType", tr("Paint type")],
+                    ["colorCode", tr("Color code")],
                   ] as const
                 ).map(([field, label]) => (
                   <label key={field}>
-                    {label}
+                    {tr(label)}
                     <input
                       className="input"
                       maxLength={200}
@@ -335,17 +345,134 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
                 ))}
               </fieldset>
             ))}
+            <section id="technical-fields">
+              <h3>{tr("Technical profile")}</h3>
+              {form.technicalProfile.customFields.map((field, index) => (
+                <fieldset key={field.id} className="form-grid section">
+                  <label>
+                    {tr("Section")}
+                    <select
+                      className="input"
+                      value={field.section}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          technicalProfile: {
+                            ...form.technicalProfile,
+                            customFields:
+                              form.technicalProfile.customFields.map((f, i) =>
+                                i === index
+                                  ? { ...f, section: e.target.value }
+                                  : f,
+                              ),
+                          },
+                        })
+                      }
+                    >
+                      {[...EQUIPMENT, ...PAINTING].map(([key, title]) => (
+                        <option value={key} key={key}>
+                          {tr(title)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {(
+                    [
+                      ["name", "Field"],
+                      ["value", "Value"],
+                      ["unit", "Unit"],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <label key={key}>
+                      {tr(label)}
+                      <input
+                        className="input"
+                        required={key === "name"}
+                        maxLength={
+                          key === "name" ? 100 : key === "unit" ? 50 : 1000
+                        }
+                        value={field[key]}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            technicalProfile: {
+                              ...form.technicalProfile,
+                              customFields:
+                                form.technicalProfile.customFields.map(
+                                  (f, i) =>
+                                    i === index
+                                      ? { ...f, [key]: e.target.value }
+                                      : f,
+                                ),
+                            },
+                          })
+                        }
+                      />
+                    </label>
+                  ))}
+                  <button
+                    className="button secondary"
+                    type="button"
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        technicalProfile: {
+                          ...form.technicalProfile,
+                          customFields:
+                            form.technicalProfile.customFields.filter(
+                              (_, i) => i !== index,
+                            ),
+                        },
+                      })
+                    }
+                  >
+                    {tr("Remove field")}
+                  </button>
+                </fieldset>
+              ))}
+              <button
+                className="button secondary"
+                type="button"
+                disabled={form.technicalProfile.customFields.length >= 100}
+                onClick={() =>
+                  setForm({
+                    ...form,
+                    technicalProfile: {
+                      ...form.technicalProfile,
+                      customFields: [
+                        ...form.technicalProfile.customFields,
+                        {
+                          id: crypto.randomUUID(),
+                          section: "engine",
+                          name: "",
+                          value: "",
+                          unit: "",
+                        },
+                      ],
+                    },
+                  })
+                }
+              >
+                + {tr("New field")}
+              </button>
+            </section>
             <button className="button">
-              {busy ? "Saving…" : editHull ? "Save changes" : "Create yacht"}
+              {busy
+                ? tr("Saving…")
+                : editHull
+                  ? tr("Save changes")
+                  : tr("Create yacht")}
             </button>
           </fieldset>
           <p>
-            Representatives receive access when assigned to this yacht in Users.
+            {tr(
+              "Representatives receive access when assigned to this yacht in Users.",
+            )}
           </p>
         </form>
       )}
       {loading ? (
-        <p>Loading yachts…</p>
+        <p>{tr("Loading yachts…")}</p>
       ) : !editHull ? (
         <div className="grid grid-2">
           {yachts.map((y) => (
@@ -364,22 +491,28 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
               </p>
               {y.deliveryDate && (
                 <p>
-                  Delivered: {y.deliveryDate.slice(0, 10)} · Warranty until:{" "}
+                  {tr("Delivered:")}
+                  {y.deliveryDate.slice(0, 10)} {tr("· Warranty until:")}{" "}
                   {y.warrantyExpiresAt?.slice(0, 10)}
                 </p>
               )}
-              <p>Captain: {y.captainName || "Not specified"}</p>
+              <p>
+                {tr("Captain:")}
+                {y.captainName || tr("Not specified")}
+              </p>
               <Link
                 className="button"
                 href={`/claims/new?yacht=${encodeURIComponent(y.hullNumber)}`}
               >
-                New claim
+                {tr("New claim")}
               </Link>
             </section>
           ))}
           {!yachts.length && !error && (
             <p>
-              No yachts yet. Create the first yacht to start registering claims.
+              {tr(
+                "No yachts yet. Create the first yacht to start registering claims.",
+              )}
             </p>
           )}
         </div>

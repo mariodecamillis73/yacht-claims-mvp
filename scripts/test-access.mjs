@@ -199,6 +199,24 @@ try {
     assert.equal(r.status, 200, JSON.stringify(r.data));
     cookies[role] = r.cookie;
   }
+  const firstClaim = (await req("/api/claims/A1", { cookie: cookies.director }))
+    .data;
+  assert.equal(firstClaim.previousClaimId, null);
+  assert.equal(firstClaim.nextClaimId, "A2");
+  const middleClaim = (
+    await req("/api/claims/A2", { cookie: cookies.director })
+  ).data;
+  assert.equal(middleClaim.previousClaimId, "A1");
+  assert.equal(middleClaim.nextClaimId, "B1");
+  const lastClaim = (await req("/api/claims/B1", { cookie: cookies.director }))
+    .data;
+  assert.equal(lastClaim.previousClaimId, "A2");
+  assert.equal(lastClaim.nextClaimId, null);
+  const representativeNeighbors = (
+    await req("/api/claims/A2", { cookie: cookies.representative })
+  ).data;
+  assert.equal(representativeNeighbors.previousClaimId, "A1");
+  assert.equal(representativeNeighbors.nextClaimId, null);
   assert.equal(
     (await req("/api/users", { cookie: cookies.staff })).status,
     403,
@@ -444,6 +462,10 @@ try {
   r = await req(portal + "/verify", { method: "POST", body: { code } });
   assert.equal(r.status, 200);
   const guest = r.cookie;
+  const guestNeighbors = (await req(portal, { cookie: guest })).data;
+  assert.equal(guestNeighbors.previousClaimId, null);
+  assert.equal(guestNeighbors.nextClaimId, null);
+
   assert.equal(
     (await req(portal + "/verify", { method: "POST", body: { code } })).status,
     401,
@@ -973,6 +995,89 @@ try {
     (await req(`/api/claims/${flowId}`, { cookie: cookies.staff })).data.claim
       .closedAt,
     null,
+  );
+  const yachtBefore = (
+    await req("/api/yachts/FLOW2", { cookie: cookies.director })
+  ).data;
+  const customFields = [
+    {
+      id: "diameter",
+      section: "propellers",
+      name: "Diameter",
+      value: "600",
+      unit: "mm",
+    },
+  ];
+  const customEdit = await req("/api/yachts/FLOW2", {
+    cookie: cookies.director,
+    method: "PATCH",
+    body: {
+      hullNumber: "FLOW2",
+      name: yachtBefore.name,
+      yearBuilt: yachtBefore.yearBuilt,
+      ownerId: yachtBefore.ownerId,
+      captainName: yachtBefore.captainName,
+      updatedAt: yachtBefore.updatedAt,
+      technicalProfile: { ...yachtBefore.technicalProfile, customFields },
+    },
+  });
+  assert.equal(customEdit.status, 200, JSON.stringify(customEdit.data));
+  assert.deepEqual(
+    (await req("/api/yachts/FLOW2", { cookie: cookies.representative })).data
+      .technicalProfile.customFields,
+    customFields,
+  );
+  const yachtForm = new FormData();
+  yachtForm.set("file", new Blob(["yacht-doc-proof"]), "yacht.txt");
+  yachtForm.set("visibility", "shared");
+  const yachtUpload = await req("/api/yachts/FLOW2/documents", {
+    cookie: cookies.staff,
+    method: "POST",
+    form: yachtForm,
+  });
+  assert.equal(yachtUpload.status, 201);
+  const yachtDocPath = `/api/yachts/FLOW2/documents/${yachtUpload.data.id}`;
+  assert.equal(
+    (await req(yachtDocPath, { cookie: cookies.representative })).data,
+    "yacht-doc-proof",
+  );
+  assert.equal(
+    (await req(yachtDocPath, { cookie: cookies.supplier })).status,
+    404,
+  );
+  assert.equal(
+    (
+      await req(`/api/yachts/A/documents/${yachtUpload.data.id}`, {
+        cookie: cookies.director,
+      })
+    ).status,
+    404,
+  );
+  const privateYachtForm = new FormData();
+  privateYachtForm.set(
+    "file",
+    new Blob(["private-yacht-proof"]),
+    "private.txt",
+  );
+  privateYachtForm.set("visibility", "internal");
+  const privateYachtDoc = await req("/api/yachts/FLOW2/documents", {
+    cookie: cookies.director,
+    method: "POST",
+    form: privateYachtForm,
+  });
+  assert.equal(privateYachtDoc.status, 201);
+  assert.equal(
+    (
+      await req(`/api/yachts/FLOW2/documents/${privateYachtDoc.data.id}`, {
+        cookie: cookies.representative,
+      })
+    ).status,
+    404,
+  );
+  assert.equal(
+    (await req("/api/yachts/FLOW2", { cookie: cookies.representative })).data
+      .documents.length,
+    1,
   );
   await db.user.update({ where: { id: "staff" }, data: { isActive: false } });
   assert.equal(

@@ -18,6 +18,24 @@ const paint = z
   .strict();
 const technicalProfile = z
   .object({
+    customFields: z
+      .array(
+        z
+          .object({
+            id: z.string().min(1).max(100),
+            section: z
+              .string()
+              .refine((value) =>
+                [...EQUIPMENT, ...PAINTING].some(([key]) => key === value),
+              ),
+            name: z.string().trim().min(1).max(100),
+            value: z.string().max(1000),
+            unit: z.string().max(50),
+          })
+          .strict(),
+      )
+      .max(100)
+      .default([]),
     equipment: z
       .object(
         Object.fromEntries(

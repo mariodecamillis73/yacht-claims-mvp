@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useLanguage } from "@/components/language-provider";
 import { TranslationKey } from "@/lib/i18n";
 export default function WorkHub() {
-  const { t, language } = useLanguage();
+  const { t, language, tr } = useLanguage();
   const [claims, setClaims] = useState<any[]>([]),
     [actor, setActor] = useState<any>(null);
   const [filter, setFilter] = useState("all"),
@@ -98,7 +98,7 @@ export default function WorkHub() {
         </div>
       </div>
       <section className="section">
-        <div className="inline-actions" aria-label="Claim filters">
+        <div className="inline-actions" aria-label={tr("Claim filters")}>
           {[
             "all",
             ...(["director", "staff", "representative"].includes(actor?.role)
@@ -204,7 +204,7 @@ export default function WorkHub() {
       </section>
       {error && (
         <p role="alert">
-          {error} <Link href="/login">{t("signIn")}</Link>
+          {tr(error)} <Link href="/login">{t("signIn")}</Link>
         </p>
       )}
       {loading ? (
@@ -243,7 +243,7 @@ export default function WorkHub() {
           {!visible.length && !error && <p>{t("empty")}</p>}
           <div className="grid grid-2">
             {Object.entries(grouped).map(([key, items]) => (
-              <section className="section" key={key}>
+              <section className="card" style={{ padding: 16 }} key={key}>
                 <h2>
                   {["director", "staff", "representative"].includes(
                     actor?.role,
@@ -257,37 +257,40 @@ export default function WorkHub() {
                     </>
                   )}
                 </h2>
-                {items?.map((c) => (
-                  <article className="claim-list-item" key={c.id}>
-                    <h3>
-                      <Link href={`/claims/${c.id}`}>{c.title}</Link>
-                    </h3>
-                    <p>
+                <div className="grid" style={{ gap: 10 }}>
+                  {items?.map((c) => (
+                    <Link
+                      href={`/claims/${c.id}`}
+                      className="list-row"
+                      key={c.id}
+                    >
+                      <div>
+                        <strong>{c.title}</strong>
+                        <div className="muted">{c.id}</div>
+                        {c.dueDate && (
+                          <small>
+                            {t("deadline")}:{" "}
+                            {new Date(c.dueDate).toLocaleDateString(language, {
+                              timeZone: "UTC",
+                            })}
+                          </small>
+                        )}
+                      </div>
                       <span className={`badge status-${c.status}`}>
                         {label(c.status)}
-                      </span>{" "}
-                      · {label(c.priority)}
+                      </span>
+                      <span className={`badge priority-${c.priority}`}>
+                        {label(c.priority)}
+                      </span>
                       {inside && (
-                        <>
-                          {" "}
-                          · {t("validation")}: {label(c.validationStatus)}
-                        </>
+                        <span>{c.assignedName || t("unassigned")}</span>
                       )}
-                    </p>
-                    {c.dueDate && (
-                      <p>
-                        {t("deadline")}:{" "}
-                        {new Date(c.dueDate).toLocaleDateString(language, {
-                          timeZone: "UTC",
-                        })}{" "}
-                        (UTC)
-                      </p>
-                    )}
-                    <small>
-                      {c.id} · {new Date(c.updatedAt).toLocaleString(language)}
-                    </small>
-                  </article>
-                ))}
+                      <span className="muted">
+                        {new Date(c.updatedAt).toLocaleDateString(language)}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
               </section>
             ))}
           </div>

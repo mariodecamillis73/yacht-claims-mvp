@@ -20,9 +20,10 @@ export async function addComment(
 }
 export async function addDocument(
   request: Request,
-  claimId: string,
+  claimId: string | null,
   actorId: string,
   isInternal: boolean,
+  yachtId?: string,
 ) {
   const reader = request.body?.getReader();
   if (!reader) throw new HttpError(400, "File required");
@@ -67,6 +68,7 @@ export async function addDocument(
   return db.document.create({
     data: {
       claimId,
+      ...(yachtId ? { yachtId } : {}),
       uploadedBy: actorId,
       fileName: name,
       storagePath: "",
@@ -84,12 +86,18 @@ export async function addDocument(
   });
 }
 export async function documentResponse(
-  claimId: string,
+  claimId: string | null,
   id: string,
   isInternal: boolean,
+  yachtId?: string,
 ) {
   const d = await db.document.findFirst({
-    where: { id, claimId, ...(isInternal ? {} : { visibility: "shared" }) },
+    where: {
+      id,
+      claimId,
+      ...(yachtId ? { yachtId } : {}),
+      ...(isInternal ? {} : { visibility: "shared" }),
+    },
   });
   if (!d?.content) throw new HttpError(404, "Document not available");
   const inline = ["image/png", "image/jpeg"].includes(d.mimeType);

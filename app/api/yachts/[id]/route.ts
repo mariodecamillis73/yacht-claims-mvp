@@ -43,7 +43,21 @@ export async function GET(
       ...yachtResponse(y),
       id: y.hullNumber,
       yachtNumber: y.hullNumber,
-      documents: [],
+      documents: await db.document.findMany({
+        where: {
+          yachtId: params.id,
+          claimId: null,
+          ...(internal(u.role) ? {} : { visibility: "shared" }),
+        },
+        select: {
+          id: true,
+          fileName: true,
+          mimeType: true,
+          visibility: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "asc" },
+      }),
     });
   } catch (e) {
     return fail(e);

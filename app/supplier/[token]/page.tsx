@@ -1,7 +1,10 @@
 "use client";
+import { useLanguage } from "@/components/language-provider";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 export default function SupplierPortalPage() {
+  const { tr, language } = useLanguage();
+
   const params = useParams<{ token: string }>();
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState("");
@@ -16,11 +19,11 @@ export default function SupplierPortalPage() {
       setData(await r.json());
       setError("");
     } else if (r.status !== 401) {
-      setError("This invitation is unavailable or expired.");
+      setError(tr("This invitation is unavailable or expired."));
     }
   }
   useEffect(() => {
-    load().catch(() => setError("Unable to connect"));
+    load().catch(() => setError(tr("Unable to connect")));
   }, [base]);
   async function verify(send: boolean) {
     setBusy(true);
@@ -75,27 +78,28 @@ export default function SupplierPortalPage() {
   return (
     <main className="container">
       <div className="section">
-        <h1>YYachts · Claim access</h1>
-        {error && <p role="alert">{error}</p>}
+        <h1>{tr("YYachts · Claim access")}</h1>
+        {error && <p role="alert">{tr(error)}</p>}
         {!data ? (
           <>
             <p>
-              Verify access using a code sent to the email address authorized by
-              the yard.
+              {tr(
+                "Verify access using a code sent to the email address authorized by the yard.",
+              )}
             </p>
             <button
               className="button"
               disabled={busy}
               onClick={() => verify(true)}
             >
-              Send verification code
+              {tr("Send verification code")}
             </button>
             {sent && (
               <>
-                <p>Check your email. The code expires in 10 minutes.</p>
+                <p>{tr("Check your email. The code expires in 10 minutes.")}</p>
                 <input
                   className="input"
-                  aria-label="Verification code"
+                  aria-label={tr("Verification code")}
                   inputMode="numeric"
                   maxLength={6}
                   value={code}
@@ -106,7 +110,7 @@ export default function SupplierPortalPage() {
                   disabled={busy || code.length !== 6}
                   onClick={() => verify(false)}
                 >
-                  Verify and open claim
+                  {tr("Verify and open claim")}
                 </button>
               </>
             )}
@@ -118,16 +122,16 @@ export default function SupplierPortalPage() {
               {data.claim.status} · {data.claim.id}
             </p>
             <p>{data.claim.description}</p>
-            <h3>Comments</h3>
+            <h3>{tr("Comments")}</h3>
             {data.comments.map((c: any) => (
               <div className="comment" key={c.id}>
-                <small>{new Date(c.createdAt).toLocaleString()}</small>
+                <small>{new Date(c.createdAt).toLocaleString(language)}</small>
                 <p>{c.message}</p>
               </div>
             ))}
             <textarea
               className="textarea"
-              aria-label="Response"
+              aria-label={tr("Response")}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
@@ -137,9 +141,9 @@ export default function SupplierPortalPage() {
               disabled={busy || !message.trim()}
               onClick={comment}
             >
-              Submit response
+              {tr("Submit response")}
             </button>
-            <h3>Photos and documents</h3>
+            <h3>{tr("Photos and documents")}</h3>
             {data.documents.map((d: any) => (
               <div key={d.id}>
                 {d.mimeType.startsWith("image/") && (
@@ -161,7 +165,7 @@ export default function SupplierPortalPage() {
               </div>
             ))}
             <label>
-              Upload photo or document (max 5 MB)
+              {tr("Upload photo or document (max 5 MB)")}
               <input
                 type="file"
                 disabled={busy}

@@ -1,8 +1,11 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
 import { LANGUAGES, translations, Language, TranslationKey } from "@/lib/i18n";
+import { translateText } from "@/lib/ui-text";
 const Context = createContext({
   language: "en" as Language,
+  tr: (text: string, values?: Record<string, string | number>) =>
+    translateText(text, "en", values),
   t: (key: TranslationKey) => translations.en[key],
 });
 export const useLanguage = () => useContext(Context);
@@ -14,14 +17,19 @@ export default function LanguageProvider({
   const [language, setLanguage] = useState<Language>("en");
   useEffect(() => {
     const saved = localStorage.getItem("yy-language");
-    if (saved && saved in LANGUAGES) setLanguage(saved as Language);
+    if (saved && Object.hasOwn(LANGUAGES, saved))
+      setLanguage(saved as Language);
   }, []);
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
   return (
     <Context.Provider
-      value={{ language, t: (key) => translations[language][key] }}
+      value={{
+        language,
+        t: (key) => translations[language][key],
+        tr: (text, values) => translateText(text, language, values),
+      }}
     >
       <div className="language-bar">
         <label>

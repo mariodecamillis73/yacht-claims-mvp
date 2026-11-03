@@ -8,34 +8,13 @@ import {
   HttpError,
   fail,
 } from "@/lib/auth";
+import { claimScope } from "@/lib/claim-scope";
 import { z } from "zod";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const u = await user(request);
-    const where = internal(u.role)
-      ? {}
-      : u.role === "representative"
-        ? {
-            yachtHullNumber: {
-              in: (
-                await db.yachtMember.findMany({ where: { userId: u.id } })
-              ).map((m) => m.hullNumber),
-            },
-          }
-        : {
-            id: {
-              in: (
-                await db.claimGrant.findMany({
-                  where: {
-                    email: u.email,
-                    revokedAt: null,
-                    expiresAt: { gt: new Date() },
-                  },
-                })
-              ).map((g) => g.claimId),
-            },
-          };
+    const where = await claimScope(u);
     const query = new URL(request.url).searchParams;
     const filter = query.get("filter") || "all";
     if (!["all", "mine", "overdue", "recent"].includes(filter))
@@ -76,7 +55,31 @@ export async function GET(request: Request) {
           : {}),
       },
     });
-    return NextResponse.json(claims);
+    const names = internal(u.role)
+      ? await db.user.findMany({
+          where: {
+            id: {
+              in: claims.map((c) =>
+                "assignedTo" in c ? c.assignedTo || "" : "",
+              ),
+            },
+          },
+          select: { id: true, firstName: true, lastName: true },
+        })
+      : [];
+    return NextResponse.json(
+      claims.map((c) =>
+        internal(u.role)
+          ? {
+              ...c,
+              assignedName: names
+                .filter((n) => n.id === c.assignedTo)
+                .map((n) => `${n.firstName} ${n.lastName}`)
+                .join(""),
+            }
+          : c,
+      ),
+    );
   } catch (e) {
     return fail(e);
   }

@@ -1,3 +1,11 @@
+# Owner update — direct claim invitations (4 November 2026)
+
+Supplier/dealer invitations open the single authorized claim directly, with NO login, password, emailed code or OTP step. A 256-bit personal token is stored only as a hash; expiration, revocation and shared/internal filtering are enforced on every request. Existing unrevoked links follow this behavior too. The verification endpoint is retired (410). Guest links do not enable yacht browsing, Prev/Next or internal API access.
+
+The director can send the invitation from **aftersales@yyachts.de**, the fixed From/Reply-To identity. The SMTP service must authorize that sender. A failed send is reported and the newly created grant is revoked. Manual link creation/copy remains available. Live SMTP configuration is still absent; the application does not claim a real invitation was delivered without provider acceptance. Local SMTP tests verify sender, recipient, direct URL and claim isolation. These owner instructions supersede older code-verification notes below.
+
+---
+
 # Prototype is the primary reference — 3 November 2026
 
 The owner confirmed the version containing Prev/Next and EN/IT/ES/DE as authoritative. See [docs/PROTOTYPE_ALIGNMENT.md](docs/PROTOTYPE_ALIGNMENT.md) for the source comparison, restored controls and verification boundaries. Previous summaries must not substitute for the prototype. Current corrections include authorized Prev/Next navigation, four-language UI label wiring throughout the application, prototype card/list-row layouts, technical custom fields with units and protected yacht-level documents. User-authored content and existing data are preserved.

@@ -11,6 +11,13 @@ const nextConfig = {
         ],
       },
       {
+        source: "/supplier/:path*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+          { key: "Cache-Control", value: "private, no-store" },
+        ],
+      },
+      {
         source: "/api/:path*",
         headers: [{ key: "Cache-Control", value: "private, no-store" }],
       },

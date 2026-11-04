@@ -19,6 +19,7 @@ const env = {
   SMTP_USER: "",
   SMTP_PASSWORD: "",
   MAIL_FROM: "test@example.invalid",
+  APP_URL: "https://yy-asm.example.invalid",
 };
 let server;
 let db;
@@ -412,7 +413,7 @@ try {
   assert.equal(grant.status, 201);
   const token = grant.data.path.split("/").pop();
   const portal = "/api/public/claims/" + token;
-  assert.equal((await req(portal)).status, 401);
+  assert.equal((await req(portal)).status, 200);
   let r = await req("/api/claims/A1", { cookie: cookies.supplier });
   assert.equal(r.status, 200);
   assert.equal(r.data.comments.length, 1);
@@ -440,35 +441,43 @@ try {
     ).status,
     403,
   );
-  assert.equal(
-    (await req(portal + "/verify", { method: "POST", body: {} })).status,
-    200,
-  );
-  assert.equal(
-    (await req(portal + "/verify", { method: "POST", body: {} })).status,
-    429,
-  );
-  const code = mail.match(/code is (\d{6})/)?.[1];
-  assert.ok(code, "Local SMTP must receive code");
-  assert.equal(
-    (
-      await req(portal + "/verify", {
-        method: "POST",
-        body: { code: "000000" },
-      })
-    ).status,
-    401,
-  );
-  r = await req(portal + "/verify", { method: "POST", body: { code } });
-  assert.equal(r.status, 200);
-  const guest = r.cookie;
-  const guestNeighbors = (await req(portal, { cookie: guest })).data;
+  const guest = "";
+  const guestNeighbors = (await req(portal)).data;
   assert.equal(guestNeighbors.previousClaimId, null);
   assert.equal(guestNeighbors.nextClaimId, null);
-
   assert.equal(
-    (await req(portal + "/verify", { method: "POST", body: { code } })).status,
-    401,
+    (await req(portal + "/verify", { method: "POST", body: {} })).status,
+    410,
+  );
+  mail = "";
+  const emailed = await req("/api/claims/A1/shares", {
+    cookie: cookies.director,
+    method: "POST",
+    body: {
+      email: "delivery@example.invalid",
+      role: "supplier",
+      days: 2,
+      sendEmail: true,
+    },
+  });
+  assert.equal(emailed.status, 201, JSON.stringify(emailed.data));
+  assert.equal(emailed.data.emailSent, true);
+  assert.equal(emailed.data.sender, "aftersales@yyachts.de");
+  assert.ok(mail.includes("aftersales@yyachts.de"));
+  assert.ok(mail.includes("Reply-To: aftersales@yyachts.de"));
+  assert.ok(!mail.includes("test@example.invalid"));
+  assert.ok(mail.includes("https://yy-asm.example.invalid"));
+  const deliveredMail = mail
+    .replace(/=\r?\n/g, "")
+    .replace(/=([0-9A-F]{2})/gi, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16)),
+    );
+  assert.ok(deliveredMail.includes(emailed.data.path.split("/").pop()));
+  assert.ok(!/verification code is [0-9]/.test(mail));
+  assert.equal(
+    (await req("/api/public/claims/" + emailed.data.path.split("/").pop()))
+      .status,
+    200,
   );
   r = await req(portal, { cookie: guest });
   assert.equal(r.status, 200);
@@ -520,17 +529,18 @@ try {
           viewport: { width: 1280, height: 900 },
         });
         const split = cookie.indexOf("=");
-        await context.addCookies([
-          {
-            name: cookie.slice(0, split),
-            value: cookie.slice(split + 1),
-            domain: "127.0.0.1",
-            path: "/",
-            httpOnly: true,
-            secure: false,
-            sameSite: "Lax",
-          },
-        ]);
+        if (cookie)
+          await context.addCookies([
+            {
+              name: cookie.slice(0, split),
+              value: cookie.slice(split + 1),
+              domain: "127.0.0.1",
+              path: "/",
+              httpOnly: true,
+              secure: false,
+              sameSite: "Lax",
+            },
+          ]);
         const page = await context.newPage();
         const errors = [];
         page.on("pageerror", (e) => errors.push(e.message));
@@ -1085,7 +1095,7 @@ try {
     401,
   );
   console.log(
-    "PASS: password authentication; role/yacht isolation; director validation; invitation email code through local SMTP; comments/documents visibility; guest upload/download; revocation; inactive users.",
+    "PASS: password authentication; role/yacht isolation; director validation; direct claim links and fixed-sender invitation email through local SMTP; comments/documents visibility; guest upload/download; revocation; inactive users.",
   );
 } finally {
   if (server) {

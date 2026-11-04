@@ -8,8 +8,7 @@ export default function SupplierPortalPage() {
   const params = useParams<{ token: string }>();
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState("");
-  const [code, setCode] = useState("");
-  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const base = `/api/public/claims/${params.token}`;
@@ -18,32 +17,18 @@ export default function SupplierPortalPage() {
     if (r.ok) {
       setData(await r.json());
       setError("");
-    } else if (r.status !== 401) {
+    } else {
       setError(tr("This invitation is unavailable or expired."));
     }
   }
   useEffect(() => {
-    load().catch(() => setError(tr("Unable to connect")));
-  }, [base]);
-  async function verify(send: boolean) {
-    setBusy(true);
+    setLoading(true);
+    setData(null);
     setError("");
-    try {
-      const r = await fetch(base + "/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(send ? {} : { code }),
-      });
-      const b = await r.json();
-      if (!r.ok) throw new Error(b.error);
-      if (send) setSent(true);
-      else await load();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
+    load()
+      .catch(() => setError("Unable to connect"))
+      .finally(() => setLoading(false));
+  }, [base]);
   async function comment() {
     setBusy(true);
     try {
@@ -81,45 +66,14 @@ export default function SupplierPortalPage() {
         <h1>{tr("YYachts · Claim access")}</h1>
         {error && <p role="alert">{tr(error)}</p>}
         {!data ? (
-          <>
-            <p>
-              {tr(
-                "Verify access using a code sent to the email address authorized by the yard.",
-              )}
-            </p>
-            <button
-              className="button"
-              disabled={busy}
-              onClick={() => verify(true)}
-            >
-              {tr("Send verification code")}
-            </button>
-            {sent && (
-              <>
-                <p>{tr("Check your email. The code expires in 10 minutes.")}</p>
-                <input
-                  className="input"
-                  aria-label={tr("Verification code")}
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                />
-                <button
-                  className="button"
-                  disabled={busy || code.length !== 6}
-                  onClick={() => verify(false)}
-                >
-                  {tr("Verify and open claim")}
-                </button>
-              </>
-            )}
-          </>
+          loading ? (
+            <p>{tr("Loading claim...")}</p>
+          ) : null
         ) : (
           <>
             <h2>{data.claim.title}</h2>
             <p>
-              {data.claim.status} · {data.claim.id}
+              {tr(data.claim.status)} · {data.claim.id}
             </p>
             <p>{data.claim.description}</p>
             <h3>{tr("Comments")}</h3>

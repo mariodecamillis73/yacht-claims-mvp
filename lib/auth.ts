@@ -119,15 +119,6 @@ export async function guestAccess(request: Request, token: string) {
   });
   if (!grant || grant.revokedAt || grant.expiresAt <= new Date())
     throw new HttpError(404, "Invitation unavailable");
-  const session = cookie(request, GUEST_COOKIE);
-  let payload: jwt.JwtPayload;
-  try {
-    payload = verifyToken(session || "");
-  } catch {
-    throw new HttpError(401, "Email verification required");
-  }
-  if (payload.kind !== "grant" || payload.sub !== grant.id)
-    throw new HttpError(401, "Email verification required");
   return grant;
 }
 export function sessionCookie(

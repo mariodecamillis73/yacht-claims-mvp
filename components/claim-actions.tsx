@@ -19,6 +19,7 @@ export default function ClaimActions({
   const [days, setDays] = useState(30);
   const [shares, setShares] = useState<any[]>([]);
   const [link, setLink] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -263,6 +264,7 @@ export default function ClaimActions({
                   role: kind,
                   days,
                 });
+                setEmailSent(false);
                 setLink(window.location.origin + b.path);
                 await loadShares();
               })
@@ -270,6 +272,31 @@ export default function ClaimActions({
           >
             {tr("Create access link")}
           </button>
+          <button
+            className="button"
+            disabled={busy || !email}
+            onClick={() =>
+              run(async () => {
+                setEmailSent(false);
+                const result = await json(base + "/shares", "POST", {
+                  email,
+                  role: kind,
+                  days,
+                  sendEmail: true,
+                });
+                setLink(window.location.origin + result.path);
+                setEmailSent(result.emailSent);
+                await loadShares();
+              })
+            }
+          >
+            {tr("Send invitation from aftersales@yyachts.de")}
+          </button>
+          {emailSent && (
+            <p role="status">
+              {tr("Invitation email sent from aftersales@yyachts.de")}
+            </p>
+          )}
           {link && (
             <div>
               <p>
@@ -293,7 +320,11 @@ export default function ClaimActions({
               >
                 {tr("Copy link")}
               </button>
-              <p>{tr("Opening the link requires verification via email.")}</p>
+              <p>
+                {tr(
+                  "This personal link opens only this claim. No access code is required.",
+                )}
+              </p>
             </div>
           )}
           {shares.map((s) => (

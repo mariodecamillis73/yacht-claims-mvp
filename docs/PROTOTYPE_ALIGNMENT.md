@@ -1,5 +1,7 @@
 # Prototype alignment — 3 November 2026
 
+Owner update 4 November: external claim links now open their one shared claim directly, without codes. Automatic invitations use aftersales@yyachts.de as fixed sender/reply address; authorized SMTP is required. This supersedes the earlier email-code flow.
+
 ## Authority and preserved source
 
 Mario confirmed that the reference is the prototype containing Previous/Next and the four languages EN/IT/ES/DE. This takes precedence over an assistant-written status summary. Sources inspected: original `origin/main` through commit `88cd161`, all prototype pages/APIs/types/mock settings and relevant history, plus the supplied Mac ZIP under `upload` and recovered Mac source. Original sources and previous checkpoint remain preserved. No original database is imported or replaced.

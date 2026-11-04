@@ -105,6 +105,27 @@ try {
     ).status,
     201,
   );
+  const hostedClaim = (
+    await request("/api/claims", "GET", undefined, login.cookie)
+  ).data[0];
+  const unavailableEmail = await request(
+    `/api/claims/${hostedClaim.id}/shares`,
+    "POST",
+    { email: "supplier@example.invalid", role: "supplier", sendEmail: true },
+    login.cookie,
+  );
+  assert.equal(unavailableEmail.status, 503);
+  const failedMailDb = new PrismaClient({
+    datasources: { db: { url: env.DATABASE_URL } },
+  });
+  try {
+    assert.equal(
+      await failedMailDb.claimGrant.count({ where: { revokedAt: null } }),
+      0,
+    );
+  } finally {
+    await failedMailDb.$disconnect();
+  }
   await stop();
   // Simulate the existing deployment immediately before the new additive migration.
   const migrationDb = new PrismaClient({

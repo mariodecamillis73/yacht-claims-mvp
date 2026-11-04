@@ -104,9 +104,9 @@ try {
 } finally {
   await db.$disconnect();
 }
-if (!process.env.SMTP_HOST || !process.env.MAIL_FROM) {
+if (!process.env.SMTP_HOST) {
   console.warn(
-    "SMTP not configured: guest email verification will remain unavailable.",
+    "SMTP not configured: invitation email delivery will remain unavailable.",
   );
 }
 const app = spawn(

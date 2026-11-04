@@ -171,7 +171,7 @@ export default function ClaimEditor({
               ))}
             </select>
           </label>
-          <p>
+          <p style={{ gridColumn: "1 / -1" }}>
             {tr(
               "Supplier assignment records responsibility. To grant access, use Share this claim separately.",
             )}{" "}

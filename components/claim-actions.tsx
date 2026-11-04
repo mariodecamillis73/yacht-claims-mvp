@@ -67,7 +67,7 @@ export default function ClaimActions({
     return b;
   }
   return (
-    <section>
+    <section className="action-panel">
       <h3>{tr("Actions")}</h3>
       {error && <p role="alert">{tr(error)}</p>}
       {inside && <ClaimEditor id={id} claim={claim} onChange={onChange} />}

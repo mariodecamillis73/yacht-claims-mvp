@@ -41,3 +41,9 @@ Automated regression tests passed with disposable records:
 - Expired and revoked links reject claim reads, comments and uploads; an expired link also rejects document download.
 
 The supplier page now scopes asynchronous results to the active link and clears displayed claim data when a comment/upload discovers revoked or expired access. This UI change passed TypeScript/build and source review; a complete authenticated browser/mobile acceptance pass remains outstanding. Local test:access and test:localization passed (285 UI labels). The preceding published checkpoint's GitHub CI completed successfully.
+
+## Layout correction pass
+
+Corrected shared layout rules: native buttons and link actions use centered inline-flex content and a consistent minimum height; claim rows within cards use two wrapping columns with the title spanning the row; summary cards fill available columns; grid children can shrink around long translated text and identifiers. Standardized field label spacing, checkbox rows, technical table wrapping, header/navigation wrapping and small-screen padding. Claim action controls now have explicit spacing and full-width explanatory text in the claim editor.
+
+Verification: production build/TypeScript and localization checks; isolated API acceptance tests use disposable data. Browser access to the local preview was blocked, so authenticated visual/mobile acceptance remains outstanding. No email configuration or credentials changed in this pass.

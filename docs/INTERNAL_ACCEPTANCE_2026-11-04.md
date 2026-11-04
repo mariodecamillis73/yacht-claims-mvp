@@ -30,3 +30,14 @@ Automated operational tests and source review against the confirmed prototype (P
 - Full authenticated browser/mobile walkthrough for each role. API and source checks do not establish complete visual acceptance.
 - Restore Microsoft account access and authorize the actual sender service; live invitation delivery and inbox verification remain pending.
 - Commission off-disk scheduled backups/retention, final domain and operational monitoring.
+
+## Edge-case follow-up, 4 November 2026
+
+Automated regression tests passed with disposable records:
+
+- Four simultaneous saves of the same claim version: exactly one succeeds, three return 409, and one update event is recorded. Two simultaneous approval/rejection decisions similarly produce one decision and one history event.
+- Unknown document visibility is rejected with 400 without storing a document; previously it silently became shared.
+- Exactly 5 MB uploads and downloads successfully; 5 MB plus one byte is rejected with 413. SVG content with an image filename is returned as an attachment with application/octet-stream and sandbox CSP.
+- Expired and revoked links reject claim reads, comments and uploads; an expired link also rejects document download.
+
+The supplier page now scopes asynchronous results to the active link and clears displayed claim data when a comment/upload discovers revoked or expired access. This UI change passed TypeScript/build and source review; a complete authenticated browser/mobile acceptance pass remains outstanding. Local test:access and test:localization passed (285 UI labels). The preceding published checkpoint's GitHub CI completed successfully.

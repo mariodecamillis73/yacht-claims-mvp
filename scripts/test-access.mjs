@@ -1180,6 +1180,54 @@ try {
     ).status,
     200,
   );
+  const raceClaim = await req("/api/claims", {cookie:cookies.staff,method:"POST",body:{yachtHullNumber:"FLOW2",title:"Simultaneous saves",description:"Same revision"}});
+  assert.equal(raceClaim.status,201);
+  const raceSaves = await Promise.all([0,1,2,3].map(index=>req(`/api/claims/${raceClaim.data.id}`,{cookie:index%2 ? cookies.staff : cookies.director,method:"PATCH",body:{title:`Winning edit ${index}`,updatedAt:raceClaim.data.updatedAt}})));
+  assert.equal(raceSaves.filter(result=>result.status===200).length,1,JSON.stringify(raceSaves.map(r=>({status:r.status,data:r.data}))));
+  assert.equal(raceSaves.filter(result=>result.status===409).length,3);
+  assert.equal(await db.activityLog.count({where:{claimId:raceClaim.data.id,action:"updated"}}),1);
+  const raceWinner = raceSaves.find(result=>result.status===200).data;
+  const raceReviews = await Promise.all(["approved","rejected"].map(decision=>req(`/api/claims/${raceClaim.data.id}/validate`,{cookie:cookies.director,method:"POST",body:{decision,rejectionReason:"Concurrent decision",updatedAt:raceWinner.updatedAt}})));
+  assert.equal(raceReviews.filter(result=>result.status===200).length,1);
+  assert.equal(raceReviews.filter(result=>result.status===409).length,1);
+  assert.equal(await db.activityLog.count({where:{claimId:raceClaim.data.id,action:{in:["approved","rejected"]}}}),1);
+  const documentsBeforeInvalid = await db.document.count({where:{claimId:raceClaim.data.id}});
+  const invalidVisibility = new FormData(); invalidVisibility.set("file",new Blob(["must not become shared"]),"private.txt"); invalidVisibility.set("visibility","private");
+  assert.equal((await req(`/api/claims/${raceClaim.data.id}/documents`,{cookie:cookies.staff,method:"POST",form:invalidVisibility})).status,400);
+  assert.equal(await db.document.count({where:{claimId:raceClaim.data.id}}),documentsBeforeInvalid);
+  const maxFile = new FormData(); maxFile.set("file",new Blob([new Uint8Array(5*1024*1024)]),"max.bin"); maxFile.set("visibility","shared");
+  const maxUpload = await req(`/api/claims/${raceClaim.data.id}/documents`,{cookie:cookies.staff,method:"POST",form:maxFile});
+  assert.equal(maxUpload.status,201);
+  const maxDownload = await fetch(base+`/api/claims/${raceClaim.data.id}/documents/${maxUpload.data.id}`,{headers:{cookie:cookies.staff}});
+  assert.equal(maxDownload.status,200);
+  assert.equal((await maxDownload.arrayBuffer()).byteLength,5*1024*1024);
+  const overFile = new FormData(); overFile.set("file",new Blob([new Uint8Array(5*1024*1024+1)]),"too-big.bin");
+  assert.equal((await req(`/api/claims/${raceClaim.data.id}/documents`,{cookie:cookies.staff,method:"POST",form:overFile})).status,413);
+  const svg = new FormData(); svg.set("file",new Blob(['<svg xmlns="http://www.w3.org/2000/svg"><script>invalidFixture()</script></svg>'],{type:"image/svg+xml"}),"image.jpg"); svg.set("visibility","shared");
+  const svgUpload = await req(`/api/claims/${raceClaim.data.id}/documents`,{cookie:cookies.staff,method:"POST",form:svg});
+  assert.equal(svgUpload.status,201);
+  assert.equal(svgUpload.data.mimeType,"application/octet-stream");
+  const externalGrant = await req(`/api/claims/${raceClaim.data.id}/shares`,{cookie:cookies.director,method:"POST",body:{email:"limits@example.invalid",role:"dealer",days:1}});
+  const externalPath = "/api/public/claims/"+externalGrant.data.path.split("/").pop();
+  const svgResponse = await fetch(base+externalPath+`/documents/${svgUpload.data.id}`);
+  assert.equal(svgResponse.status,200);
+  assert.ok(svgResponse.headers.get("content-disposition").startsWith("attachment"));
+  assert.ok(svgResponse.headers.get("content-security-policy").includes("sandbox"));
+  await svgResponse.arrayBuffer();
+  await db.claimGrant.update({where:{id:externalGrant.data.id},data:{expiresAt:new Date(Date.now()-1000)}});
+  assert.equal((await req(externalPath)).status,404);
+  assert.equal((await req(externalPath+`/documents/${svgUpload.data.id}`)).status,404);
+  assert.equal((await req(externalPath+"/comments",{method:"POST",body:{message:"Expired access"}})).status,404);
+  const expiredUpload = new FormData(); expiredUpload.set("file",new Blob(["expired"]),"expired.txt");
+  assert.equal((await req(externalPath+"/documents",{method:"POST",form:expiredUpload})).status,404);
+  const revokeGrant = await req(`/api/claims/${raceClaim.data.id}/shares`,{cookie:cookies.director,method:"POST",body:{email:"revoke@example.invalid",role:"supplier",days:1}});
+  const revokePath = "/api/public/claims/"+revokeGrant.data.path.split("/").pop();
+  assert.equal((await req(revokePath)).status,200);
+  assert.equal((await req(`/api/claims/${raceClaim.data.id}/shares`,{cookie:cookies.director,method:"DELETE",body:{id:revokeGrant.data.id}})).status,200);
+  assert.equal((await req(revokePath)).status,404);
+  assert.equal((await req(revokePath+"/comments",{method:"POST",body:{message:"Revoked access"}})).status,404);
+  const revokedUpload = new FormData(); revokedUpload.set("file",new Blob(["revoked"]),"revoked.txt");
+  assert.equal((await req(revokePath+"/documents",{method:"POST",form:revokedUpload})).status,404);
   await db.user.update({ where: { id: "staff" }, data: { isActive: false } });
   assert.equal(
     (await req("/api/claims", { cookie: cookies.staff })).status,

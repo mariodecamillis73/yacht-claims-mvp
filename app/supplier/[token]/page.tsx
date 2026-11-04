@@ -1,34 +1,45 @@
 "use client";
 import { useLanguage } from "@/components/language-provider";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 export default function SupplierPortalPage() {
   const { tr, language } = useLanguage();
 
   const params = useParams<{ token: string }>();
-  const [data, setData] = useState<any>(null);
+  const [resource, setResource] = useState<{ scope: string; value: any } | null>(null);
+  const activeBase = useRef<string | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const base = `/api/public/claims/${params.token}`;
+  const data = resource?.scope === base ? resource.value : null;
+  function setData(value: any) {
+    setResource(value ? { scope: base, value } : null);
+  }
   async function load() {
     const r = await fetch(base);
+    const value = r.ok ? await r.json() : null;
+    if (activeBase.current !== base) return;
     if (r.ok) {
-      setData(await r.json());
+      setData(value);
       setError("");
     } else {
       setData(null);
-      setError(tr("This invitation is unavailable or expired."));
+      setError("This invitation is unavailable or expired.");
     }
   }
   useEffect(() => {
+    activeBase.current = base;
+    setMessage("");
+    setBusy(false);
     setLoading(true);
     setData(null);
     setError("");
     load()
-      .catch(() => setError("Unable to connect"))
-      .finally(() => setLoading(false));
+      .catch(() => { if (activeBase.current === base) setError("Unable to connect"); })
+      .finally(() => { if (activeBase.current === base) setLoading(false); });
+    return () => { activeBase.current = null; };
   }, [base]);
   async function comment() {
     setBusy(true);
@@ -38,13 +49,20 @@ export default function SupplierPortalPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
       });
-      if (!r.ok) throw new Error((await r.json()).error);
+      if (activeBase.current !== base) return;
+      if (!r.ok) {
+        if (r.status === 404) {
+          setData(null);
+          throw new Error("This invitation is unavailable or expired.");
+        }
+        throw new Error((await r.json()).error);
+      }
       setMessage("");
       await load();
     } catch (e) {
-      setError((e as Error).message);
+      if (activeBase.current === base) setError((e as Error).message);
     } finally {
-      setBusy(false);
+      if (activeBase.current === base) setBusy(false);
     }
   }
   async function upload(file: File) {
@@ -53,12 +71,19 @@ export default function SupplierPortalPage() {
       const body = new FormData();
       body.set("file", file);
       const r = await fetch(base + "/documents", { method: "POST", body });
-      if (!r.ok) throw new Error((await r.json()).error);
+      if (activeBase.current !== base) return;
+      if (!r.ok) {
+        if (r.status === 404) {
+          setData(null);
+          throw new Error("This invitation is unavailable or expired.");
+        }
+        throw new Error((await r.json()).error);
+      }
       await load();
     } catch (e) {
-      setError((e as Error).message);
+      if (activeBase.current === base) setError((e as Error).message);
     } finally {
-      setBusy(false);
+      if (activeBase.current === base) setBusy(false);
     }
   }
   return (

@@ -1,3 +1,7 @@
+## Collaudo casi limite — 4 novembre 2026
+
+Superati test automatici su salvataggi e decisioni simultanee, limite allegati di 5 MB, download sicuro di SVG e letture/scritture negate dopo scadenza o revoca dei link. Corretta la visibilità non valida degli allegati (ora rifiutata invece di diventare condivisa) e la gestione delle risposte asincrone/link non più validi nel portale supplier. Build e controllo EN/IT/ES/DE superati. Dettagli e limiti in `docs/INTERNAL_ACCEPTANCE_2026-11-04.md`; collaudo visuale completo e invio Microsoft reale restano da completare.
+
 # Internal acceptance progress — 4 November 2026
 
 Automated internal acceptance completed; [detailed cases and limits](docs/INTERNAL_ACCEPTANCE_2026-11-04.md). Fixed stale claim edits/approvals and detail loading while navigating Prev/Next; newer data is preserved. Source-label checks cover 284 UI labels across EN/IT/ES/DE. Real Microsoft email authorization and full authenticated visual acceptance remain separate. Original prototype and subsequent owner requests remain authoritative.

@@ -1,6 +1,7 @@
 import { translations, Language } from "./i18n";
 // Source-language keys are UI text only. User-authored content is never translated.
 const rows = `
+Invalid document visibility|Visibilità del documento non valida|Visibilidad del documento no válida|Ungültige Dokumentsichtbarkeit
 Reload latest claim|Ricarica il claim aggiornato|Recargar reclamación actualizada|Aktuellen Claim neu laden
 
 Send invitation from aftersales@yyachts.de|Invia invito da aftersales@yyachts.de|Enviar invitación desde aftersales@yyachts.de|Einladung von aftersales@yyachts.de senden

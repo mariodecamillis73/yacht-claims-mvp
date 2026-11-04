@@ -46,8 +46,9 @@ export async function addDocument(
   });
   const form = await safeRequest.formData();
   const file = form.get("file");
-  const visibility =
-    form.get("visibility") === "internal" ? "internal" : "shared";
+  const visibility = form.get("visibility") ?? "shared";
+  if (visibility !== "internal" && visibility !== "shared")
+    throw new HttpError(400, "Invalid document visibility");
   if (!isInternal && visibility === "internal")
     throw new HttpError(403, "Not permitted");
   if (!file || typeof file === "string" || file.size === 0)

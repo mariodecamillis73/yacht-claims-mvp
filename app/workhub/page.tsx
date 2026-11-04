@@ -1,398 +1,301 @@
 "use client";
-
 import { useEffect, useState } from "react";
-
-type Claim = {
-  id: string;
-  yachtHullNumber: string;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  validationStatus: string;
-  validatedBy?: string | null;
-  createdAt?: string;
-  yacht?: { name: string };
-};
-
-const getPriorityTone = (priority: string) => {
-  switch (priority.toLowerCase()) {
-    case "high":
-      return { background: "#fce4e4", color: "#b54757" };
-    case "medium":
-      return { background: "#fdf0d0", color: "#b7791f" };
-    case "low":
-      return { background: "#dff7e8", color: "#2d8b5d" };
-    default:
-      return { background: "#eef2ff", color: "#4b5563" };
-  }
-};
-
-const getStatusTone = (status: string) => {
-  switch (status.toLowerCase()) {
-    case "open":
-      return { background: "#dfeaf8", color: "#1f2a37" };
-    case "closed":
-      return { background: "#dff7e8", color: "#2d8b5d" };
-    case "supplier_pending":
-      return { background: "#fdf0d0", color: "#b7791f" };
-    default:
-      return { background: "#eef2ff", color: "#4b5563" };
-  }
-};
-
-export default function HomePage() {
-  const [claims, setClaims] = useState<Claim[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const [error, setError] = useState("");
-  const [role, setRole] = useState("");
+import Link from "next/link";
+import { useLanguage } from "@/components/language-provider";
+import { TranslationKey } from "@/lib/i18n";
+export default function WorkHub() {
+  const { t, language, tr } = useLanguage();
+  const [claims, setClaims] = useState<any[]>([]),
+    [actor, setActor] = useState<any>(null);
+  const [filter, setFilter] = useState("all"),
+    [search, setSearch] = useState(""),
+    [status, setStatus] = useState(""),
+    [priority, setPriority] = useState(""),
+    [hull, setHull] = useState("");
+  const [loading, setLoading] = useState(true),
+    [error, setError] = useState(""),
+    [refresh, setRefresh] = useState(0);
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((u) => setRole(u?.role || ""));
-  }, []);
-  useEffect(() => {
-    const loadClaims = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/claims");
-        if (!response.ok) throw new Error("Fetch failed");
-        const data = await response.json();
-        if (!Array.isArray(data)) throw new Error("Invalid claim response");
-        setClaims(data);
-      } catch {
-        setError("Unable to load claims. Please try again.");
-      } finally {
-        setLoading(false);
-      }
+    let active = true;
+    setLoading(true);
+    setError("");
+    Promise.all([fetch("/api/auth/me"), fetch(`/api/claims?filter=${filter}`)])
+      .then(async ([a, b]) => {
+        if (!a.ok || !b.ok) throw new Error();
+        const [u, rows] = await Promise.all([a.json(), b.json()]);
+        if (active) {
+          setActor(u);
+          setClaims(rows);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setClaims([]);
+          setError(t("error"));
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
     };
-
-    loadClaims();
-  }, []);
-
-  const grouped: Record<string, Claim[]> = {};
-  claims.forEach((claim) => {
-    const key = claim.yachtHullNumber;
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(claim);
-  });
-
-  const yachts = Object.entries(grouped);
-
+  }, [filter, refresh]);
+  const inside = ["director", "staff"].includes(actor?.role);
+  const visible = claims.filter(
+    (c) =>
+      (!status || c.status === status) &&
+      (!priority || c.priority === priority) &&
+      (!hull || c.yachtHullNumber === hull) &&
+      `${c.title} ${c.description} ${c.id} ${c.yachtHullNumber} ${c.yacht?.name}`
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+  );
+  const grouped: Record<string, any[]> = {};
+  for (const claim of visible)
+    (grouped[claim.yachtHullNumber] ||= []).push(claim);
+  const label = (value: string) => t(value as TranslationKey) || value;
   return (
-    <main
-      style={{
-        background: "#f3f5f7",
-        minHeight: "100vh",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <div
-        style={{
-          background: "#0f233e",
-          color: "#fff",
-          height: 72,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 28px",
-          boxSizing: "border-box",
-        }}
-      >
-        <div style={{ fontSize: 18, fontWeight: 700 }}>Yacht Claims MVP</div>
-
-        <nav
-          style={{
-            display: "flex",
-            gap: 28,
-            alignItems: "center",
-            fontSize: 17,
-          }}
-        >
-          <a href="/workhub">Work Hub</a>
-          {role === "director" && <a href="/users">Users</a>}
-          <a href="/my-yacht">My Yacht</a>
+    <main className="container page-shell">
+      <header className="topbar">
+        <strong>YY ASM</strong>
+        <nav>
+          <Link href="/workhub">{t("workhub")}</Link>
+          {["director", "staff", "representative"].includes(actor?.role) && (
+            <Link href="/yachts">{t("yachts")}</Link>
+          )}
+          {actor?.role === "representative" && (
+            <Link href="/my-yacht">{t("myYachts")}</Link>
+          )}
+          {inside && <Link href="/suppliers">{t("suppliers")}</Link>}
+          {actor?.role === "director" && (
+            <Link href="/users">{t("users")}</Link>
+          )}
         </nav>
-
         <button
+          className="button secondary"
           onClick={async () => {
             await fetch("/api/auth/logout", { method: "POST" });
-            localStorage.removeItem("user");
             window.location.href = "/login";
           }}
-          style={{
-            background: "#eef2f7",
-            color: "#0f233e",
-            border: "none",
-            borderRadius: 10,
-            padding: "10px 18px",
-            fontSize: 17,
-            fontWeight: 700,
-            cursor: "pointer",
-          }}
         >
-          Logout
+          {t("logout")}
         </button>
+      </header>
+      <div className="section-header">
+        <h1>{t("workhub")}</h1>
+        <div className="inline-actions">
+          {["director", "staff", "representative"].includes(actor?.role) && (
+            <Link className="button" href="/claims/new">
+              {t("newClaim")}
+            </Link>
+          )}
+          {inside && (
+            <Link className="button secondary" href="/yachts">
+              {t("newYacht")}
+            </Link>
+          )}
+        </div>
       </div>
-
+      <section className="section">
+        <div className="inline-actions" aria-label={tr("Claim filters")}>
+          {[
+            "all",
+            ...(["director", "staff", "representative"].includes(actor?.role)
+              ? ["mine"]
+              : []),
+            "overdue",
+            "recent",
+          ].map((v) => (
+            <button
+              className={filter === v ? "button" : "button secondary"}
+              aria-pressed={filter === v}
+              key={v}
+              onClick={() => setFilter(v)}
+            >
+              {t(v as TranslationKey)}
+            </button>
+          ))}
+        </div>
+        <div className="grid grid-2" style={{ marginTop: 16 }}>
+          <label>
+            {t("search")}
+            <input
+              className="input"
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
+          <label>
+            {t("yachts")}
+            <select
+              className="input"
+              value={hull}
+              onChange={(e) => setHull(e.target.value)}
+            >
+              <option value="">{t("any")}</option>
+              {Array.from(new Set(claims.map((c) => c.yachtHullNumber))).map(
+                (h) => (
+                  <option key={h}>{h}</option>
+                ),
+              )}
+            </select>
+          </label>
+          <label>
+            {t("status")}
+            <select
+              className="input"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="">{t("any")}</option>
+              {[
+                "new",
+                "assigned",
+                "in_progress",
+                "supplier_pending",
+                "closed",
+                "rejected",
+              ].map((v) => (
+                <option key={v} value={v}>
+                  {label(v)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {t("priority")}
+            <select
+              className="input"
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+            >
+              <option value="">{t("any")}</option>
+              {["low", "medium", "high", "critical"].map((v) => (
+                <option key={v} value={v}>
+                  {label(v)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="inline-actions" style={{ marginTop: 16 }}>
+          <button
+            className="button secondary"
+            onClick={() => {
+              setSearch("");
+              setStatus("");
+              setPriority("");
+              setHull("");
+              setFilter("all");
+            }}
+          >
+            {t("clear")}
+          </button>
+          <button
+            className="button secondary"
+            disabled={loading}
+            onClick={() => setRefresh(refresh + 1)}
+          >
+            {t("refresh")}
+          </button>
+        </div>
+      </section>
       {error && (
-        <p role="alert" className="container">
-          {error}
+        <p role="alert">
+          {tr(error)} <Link href="/login">{t("signIn")}</Link>
         </p>
       )}
-      {!loading && !error && claims.length === 0 && (
-        <p className="container">No claims yet.</p>
-      )}
-      <div style={{ padding: "24px 28px" }}>
-        <div
-          style={{
-            maxWidth: 1320,
-            margin: "0 auto",
-            background: "#f0f2f4",
-            borderRadius: 18,
-            border: "1px solid #dfe4ea",
-            padding: "18px 20px 24px",
-            boxSizing: "border-box",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 18,
-            }}
-          >
-            <h1
-              style={{
-                margin: 0,
-                fontSize: 36,
-                fontWeight: 800,
-                color: "#1f2a37",
-              }}
-            >
-              Work Hub
-            </h1>
-
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <span
-                style={{
-                  background: "#dfeaf8",
-                  color: "#2b4d77",
-                  borderRadius: 999,
-                  padding: "9px 16px",
-                  fontWeight: 700,
-                  fontSize: 14,
-                }}
-              >
-                My Work
-              </span>
-              <span
-                style={{
-                  background: "#f8e9bb",
-                  color: "#7a5a14",
-                  borderRadius: 999,
-                  padding: "9px 16px",
-                  fontWeight: 700,
-                  fontSize: 14,
-                }}
-              >
-                Overdue
-              </span>
-              <span
-                style={{
-                  background: "#dff7e8",
-                  color: "#2d8b5d",
-                  borderRadius: 999,
-                  padding: "9px 16px",
-                  fontWeight: 700,
-                  fontSize: 14,
-                }}
-              >
-                Recently updated
-              </span>
+      {loading ? (
+        <p>{t("loading")}</p>
+      ) : (
+        <>
+          <div className="summary-cards">
+            <div className="summary-card">
+              {t("total")}
+              <strong>{visible.length}</strong>
+            </div>
+            <div className="summary-card">
+              {t("open")}
+              <strong>
+                {
+                  visible.filter(
+                    (c) => !["closed", "rejected"].includes(c.status),
+                  ).length
+                }
+              </strong>
+            </div>
+            <div className="summary-card">
+              {t("overdue")}
+              <strong>
+                {
+                  visible.filter(
+                    (c) =>
+                      c.dueDate &&
+                      new Date(c.dueDate) < new Date() &&
+                      !["closed", "rejected"].includes(c.status),
+                  ).length
+                }
+              </strong>
             </div>
           </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 18,
-            }}
-          >
-            {yachts.map(([hullNumber, items]) => (
-              <div
-                key={hullNumber}
-                style={{
-                  border: "1px solid #dfe4ea",
-                  borderRadius: 16,
-                  background: "#f7f9fa",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "18px 18px 12px",
-                    borderBottom: "1px solid #dfe4ea",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 800,
-                      color: "#1f2a37",
-                    }}
-                  >
-                    {items[0]?.yacht?.name || hullNumber}
-                    <div
-                      style={{
-                        fontSize: 15,
-                        fontWeight: 600,
-                        color: "#5d6b7a",
-                        marginTop: 2,
-                      }}
+          {!visible.length && !error && <p>{t("empty")}</p>}
+          <div className="grid grid-2">
+            {Object.entries(grouped).map(([key, items]) => (
+              <section className="card" style={{ padding: 16 }} key={key}>
+                <h2>
+                  {["director", "staff", "representative"].includes(
+                    actor?.role,
+                  ) ? (
+                    <Link href={`/yachts/${encodeURIComponent(key)}`}>
+                      {items?.[0]?.yacht?.name || key} · {key}
+                    </Link>
+                  ) : (
+                    <>
+                      {items?.[0]?.yacht?.name || key} · {key}
+                    </>
+                  )}
+                </h2>
+                <div className="grid" style={{ gap: 10 }}>
+                  {items?.map((c) => (
+                    <Link
+                      href={`/claims/${c.id}`}
+                      className="list-row"
+                      key={c.id}
                     >
-                      {hullNumber}
-                    </div>
-                  </div>
-
-                  <span
-                    style={{
-                      ...getStatusTone(items[0]?.status || "open"),
-                      borderRadius: 10,
-                      padding: "8px 16px",
-                      fontWeight: 700,
-                      fontSize: 16,
-                    }}
-                  >
-                    {items[0]?.status === "closed" ? "Closed" : "Open"}
-                  </span>
-                </div>
-
-                <div style={{ padding: "10px 16px 16px" }}>
-                  {items.map((claim) => (
-                    <div
-                      key={claim.id}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        border: "1px solid #dfe4ea",
-                        borderRadius: 12,
-                        padding: "18px 14px",
-                        background: "#f0f4f7",
-                        marginTop: 12,
-                      }}
-                    >
-                      <div style={{ flex: 1 }}>
-                        <div
-                          style={{
-                            fontSize: 24,
-                            lineHeight: 1.2,
-                            fontWeight: 700,
-                            color: "#1f2a37",
-                          }}
-                        >
-                          <a href={`/claims/${claim.id}`}>{claim.title}</a>
-                        </div>
-                        <div
-                          style={{
-                            color: "#5d6b7a",
-                            fontSize: 15,
-                            marginTop: 4,
-                          }}
-                        >
-                          {claim.id}
-                        </div>
+                      <div>
+                        <strong>{c.title}</strong>
+                        <div className="muted">{c.id}</div>
+                        {c.dueDate && (
+                          <small>
+                            {t("deadline")}:{" "}
+                            {new Date(c.dueDate).toLocaleDateString(language, {
+                              timeZone: "UTC",
+                            })}
+                          </small>
+                        )}
                       </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <span
-                          style={{
-                            ...getStatusTone(claim.status),
-                            borderRadius: 999,
-                            padding: "6px 12px",
-                            fontWeight: 700,
-                            fontSize: 12,
-                          }}
-                        >
-                          {claim.status === "supplier_pending"
-                            ? "supplier_pending"
-                            : claim.status}
-                        </span>
-
-                        <span
-                          style={{
-                            ...getPriorityTone(claim.priority),
-                            borderRadius: 999,
-                            padding: "6px 12px",
-                            fontWeight: 700,
-                            fontSize: 12,
-                          }}
-                        >
-                          {claim.priority}
-                        </span>
-
-                        <span
-                          style={{
-                            background: "#e8eef7",
-                            color: "#35507a",
-                            borderRadius: 999,
-                            padding: "6px 12px",
-                            fontWeight: 700,
-                            fontSize: 12,
-                          }}
-                        >
-                          {claim.validatedBy ?? "Pending validation"}
-                        </span>
-
-                        {claim.createdAt ? (
-                          <span
-                            style={{
-                              color: "#495a6b",
-                              fontSize: 12,
-                              fontWeight: 600,
-                              marginLeft: 4,
-                            }}
-                          >
-                            {new Date(claim.createdAt).toLocaleDateString(
-                              "en-GB",
-                            )}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
+                      <span className={`badge status-${c.status}`}>
+                        {label(c.status)}
+                      </span>
+                      <span className={`badge priority-${c.priority}`}>
+                        {label(c.priority)}
+                      </span>
+                      {inside && (
+                        <span>{c.assignedName || t("unassigned")}</span>
+                      )}
+                      <span className="muted">
+                        {new Date(c.updatedAt).toLocaleDateString(language)}
+                      </span>
+                    </Link>
                   ))}
                 </div>
-              </div>
+              </section>
             ))}
           </div>
-        </div>
-      </div>
-
-      {loading ? (
-        <div
-          style={{
-            textAlign: "center",
-            paddingBottom: 24,
-            color: "#495a6b",
-          }}
-        >
-          Caricamento...
-        </div>
-      ) : null}
+        </>
+      )}
     </main>
   );
 }

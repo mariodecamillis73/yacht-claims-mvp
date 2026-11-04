@@ -1,23 +1,35 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/components/language-provider";
+import ClaimEditor from "@/components/claim-editor";
+import { nextStatuses, STATUS_LABELS } from "@/lib/claim-workflow";
 export default function ClaimActions({
   id,
   onChange,
+  claim,
 }: {
   id: string;
+  claim: any;
   onChange: () => void;
 }) {
+  const { t, tr, language } = useLanguage();
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [kind, setKind] = useState("supplier");
   const [days, setDays] = useState(30);
   const [shares, setShares] = useState<any[]>([]);
   const [link, setLink] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [visibility, setVisibility] = useState("shared");
   const [reason, setReason] = useState("");
+  const [nextStatus, setNextStatus] = useState("");
+  const options = nextStatuses(claim.status, claim.validationStatus || "");
+  useEffect(() => {
+    setNextStatus("");
+  }, [claim.status, claim.validationStatus]);
   const base = `/api/claims/${id}`;
   const inside = ["director", "staff"].includes(role);
   async function loadShares() {
@@ -55,11 +67,64 @@ export default function ClaimActions({
     return b;
   }
   return (
-    <section>
-      <h3>Actions</h3>
-      {error && <p role="alert">{error}</p>}
+    <section className="action-panel">
+      <h3>{tr("Actions")}</h3>
+      {error && <p role="alert">{tr(error)}</p>}
+      {inside && <ClaimEditor id={id} claim={claim} onChange={onChange} />}
+      {inside && (
+        <section className="workflow-actions">
+          <h3>{t("workflow")}</h3>
+          <p>
+            {tr("Current status:")}{" "}
+            <strong>{tr(STATUS_LABELS[claim.status] || claim.status)}</strong>{" "}
+            {tr("· Validation:")}
+            {tr(claim.validationStatus || "pending")}
+          </p>
+          {claim.validationStatus !== "approved" ? (
+            <p>
+              {tr(
+                "Director approval is required before this claim can advance or close.",
+              )}
+            </p>
+          ) : (
+            <>
+              <label>
+                {t("nextStatus")}
+                <select
+                  className="input"
+                  value={nextStatus}
+                  disabled={busy}
+                  onChange={(e) => setNextStatus(e.target.value)}
+                >
+                  <option value="">{tr("Select next status")}</option>
+                  {options.map((status) => (
+                    <option key={status} value={status}>
+                      {tr(STATUS_LABELS[status])}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="button"
+                disabled={busy || !nextStatus}
+                onClick={() =>
+                  run(async () => {
+                    await json(base, "PATCH", {
+                      status: nextStatus,
+                      updatedAt: claim.updatedAt,
+                    });
+                  })
+                }
+              >
+                {claim.status === "closed" ? t("reopen") : t("updateStatus")}
+              </button>
+            </>
+          )}
+        </section>
+      )}
+
       <label>
-        Comment
+        {t("comment")}
         <textarea
           className="textarea"
           value={message}
@@ -68,14 +133,14 @@ export default function ClaimActions({
       </label>
       {inside && (
         <label>
-          Visibility
+          {t("visibility")}
           <select
             className="input"
             value={visibility}
             onChange={(e) => setVisibility(e.target.value)}
           >
-            <option value="shared">Shared with authorized participants</option>
-            <option value="internal">Internal to yard</option>
+            <option value="shared">{t("shared")}</option>
+            <option value="internal">{t("internal")}</option>
           </select>
         </label>
       )}
@@ -89,11 +154,11 @@ export default function ClaimActions({
           })
         }
       >
-        Add comment
+        {t("addComment")}
       </button>
       <p>
         <label>
-          Upload photo or document (max 5 MB)
+          {tr("Upload photo or document (max 5 MB)")}
           <input
             type="file"
             disabled={busy}
@@ -117,9 +182,9 @@ export default function ClaimActions({
       </p>
       {role === "director" && (
         <>
-          <h3>Director validation</h3>
+          <h3>{tr("Director validation")}</h3>
           <label>
-            Rejection reason
+            {tr("Rejection reason")}
             <input
               className="input"
               value={reason}
@@ -128,38 +193,43 @@ export default function ClaimActions({
           </label>
           <button
             className="button"
-            disabled={busy}
+            disabled={busy || claim.validationStatus !== "pending"}
             onClick={() =>
               run(async () => {
                 await json(base + "/validate", "POST", {
                   decision: "approved",
+                  updatedAt: claim.updatedAt,
                 });
               })
             }
           >
-            Approve
+            {tr("Approve")}
           </button>{" "}
           <button
             className="button secondary"
-            disabled={busy || !reason.trim()}
+            disabled={
+              busy || !reason.trim() || claim.validationStatus !== "pending"
+            }
             onClick={() =>
               run(async () => {
                 await json(base + "/validate", "POST", {
                   decision: "rejected",
+                  updatedAt: claim.updatedAt,
                   rejectionReason: reason,
                 });
               })
             }
           >
-            Reject
+            {tr("Reject")}
           </button>
-          <h3>Share this claim</h3>
+          <h3>{tr("Share this claim")}</h3>
           <p>
-            The invitation grants access to shared comments, photos and
-            documents only.
+            {tr(
+              "The invitation grants access to shared comments, photos and documents only.",
+            )}
           </p>
           <label>
-            Email
+            {tr("Email")}
             <input
               type="email"
               className="input"
@@ -168,18 +238,18 @@ export default function ClaimActions({
             />
           </label>
           <label>
-            Participant
+            {tr("Participant")}
             <select
               className="input"
               value={kind}
               onChange={(e) => setKind(e.target.value)}
             >
-              <option value="supplier">Supplier</option>
-              <option value="dealer">Dealer</option>
+              <option value="supplier">{tr("Supplier")}</option>
+              <option value="dealer">{tr("Dealer")}</option>
             </select>
           </label>
           <label>
-            Expires in days
+            {tr("Expires in days")}
             <input
               type="number"
               className="input"
@@ -199,19 +269,49 @@ export default function ClaimActions({
                   role: kind,
                   days,
                 });
+                setEmailSent(false);
                 setLink(window.location.origin + b.path);
                 await loadShares();
               })
             }
           >
-            Create access link
+            {tr("Create access link")}
           </button>
+          <button
+            className="button"
+            disabled={busy || !email}
+            onClick={() =>
+              run(async () => {
+                setEmailSent(false);
+                const result = await json(base + "/shares", "POST", {
+                  email,
+                  role: kind,
+                  days,
+                  sendEmail: true,
+                });
+                setLink(window.location.origin + result.path);
+                setEmailSent(result.emailSent);
+                await loadShares();
+              })
+            }
+          >
+            {tr("Send invitation from aftersales@yyachts.de")}
+          </button>
+          {emailSent && (
+            <p role="status">
+              {tr("Invitation email sent from aftersales@yyachts.de")}
+            </p>
+          )}
           {link && (
             <div>
-              <p>Copy this link and send it to the authorized email address:</p>
+              <p>
+                {tr(
+                  "Copy this link and send it to the authorized email address:",
+                )}
+              </p>
               <input
                 className="input"
-                aria-label="Claim access link"
+                aria-label={tr("Claim access link")}
                 readOnly
                 value={link}
               />
@@ -223,20 +323,28 @@ export default function ClaimActions({
                   })
                 }
               >
-                Copy link
+                {tr("Copy link")}
               </button>
-              <p>Opening the link requires verification via email.</p>
+              <p>
+                {tr(
+                  "This personal link opens only this claim. No access code is required.",
+                )}
+              </p>
             </div>
           )}
           {shares.map((s) => (
             <div className="comment" key={s.id}>
               <p>
-                {s.email} · {s.role} ·{" "}
+                {s.email} · {tr(s.role)} ·{" "}
                 {s.revokedAt
-                  ? "Revoked"
+                  ? tr("Revoked")
                   : new Date(s.expiresAt) < new Date()
-                    ? "Expired"
-                    : `Expires ${new Date(s.expiresAt).toLocaleDateString()}`}
+                    ? tr("Expired")
+                    : tr("Expires {date}", {
+                        date: new Date(s.expiresAt).toLocaleDateString(
+                          language,
+                        ),
+                      })}
               </p>
               {!s.revokedAt && (
                 <button
@@ -249,7 +357,7 @@ export default function ClaimActions({
                     })
                   }
                 >
-                  Revoke access
+                  {tr("Revoke access")}
                 </button>
               )}
             </div>

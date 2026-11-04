@@ -1,125 +1,69 @@
-# Current milestone — authenticated claim sharing (2 November 2026)
+## Collaudo casi limite — 4 novembre 2026
 
-Implemented on `feature/claim-access-control`, based on the recovery branch. This section supersedes the older recovery limitations below where they overlap.
+Superati test automatici su salvataggi e decisioni simultanee, limite allegati di 5 MB, download sicuro di SVG e letture/scritture negate dopo scadenza o revoca dei link. Corretta la visibilità non valida degli allegati (ora rifiutata invece di diventare condivisa) e la gestione delle risposte asincrone/link non più validi nel portale supplier. Build e controllo EN/IT/ES/DE superati. Dettagli e limiti in `docs/INTERNAL_ACCEPTANCE_2026-11-04.md`; collaudo visuale completo e invio Microsoft reale restano da completare.
 
-- Database-backed password login; signed HttpOnly sessions; active-account checks and throttling. Removed the unused browser identity registry and demo-login behavior.
-- Roles: director, staff, representative, supplier, dealer. Director manages users and yacht assignments through `/users` and validates claims; staff cannot approve. Representatives are restricted to assigned yachts. Supplier/dealer access is restricted to individual grants.
-- Director can create expiring claim invitations for an email, copy the link and revoke access. Guest verifies a single-use email code through SMTP before opening a claim. A link alone cannot disclose data.
-- Shared comments, photo/document upload and protected downloads work for guests and signed-in participants. Internal content is excluded from external responses. Old comments/documents default to internal during migration. Existing metadata-only attachments still need file import.
-- Fresh-install migrations and a tested baseline path for the original Mac schema. Director bootstrap script and configuration/runbook in README.
-- Production build, TypeScript and access integration tests passed. Integration tests use a disposable migrated database and local SMTP sink; no real messages were sent. The baseline migration was also tested against existing records.
-- Browser visual QA could not run: Chromium is absent and its download was unavailable. The optional `YY_UI_TEST=1` test path requires Playwright with Chromium installed.
+# Internal acceptance progress — 4 November 2026
 
-Next release work: browser/mobile QA, dependency security upgrades, account activation/password reset, remaining claim creation/status UI, comprehensive audit logging, upload scanning/quotas, backup/restore and hosting/domain/SMTP setup. Not deployed; no changes merged into main. SQLite requires a persistent disk and one application instance. No real SMTP configuration is included.
+Automated internal acceptance completed; [detailed cases and limits](docs/INTERNAL_ACCEPTANCE_2026-11-04.md). Fixed stale claim edits/approvals and detail loading while navigating Prev/Next; newer data is preserved. Source-label checks cover 284 UI labels across EN/IT/ES/DE. Real Microsoft email authorization and full authenticated visual acceptance remain separate. Original prototype and subsequent owner requests remain authoritative.
 
 ---
 
-# Yacht Claims MVP - Session Summary
+# Owner update — direct claim invitations (4 November 2026)
 
-## Repository
-- GitHub repo: https://github.com/mariodecamillis73/yacht-claims-mvp
-- Default branch: main
+Supplier/dealer invitations open the single authorized claim directly, with NO login, password, emailed code or OTP step. A 256-bit personal token is stored only as a hash; expiration, revocation and shared/internal filtering are enforced on every request. Existing unrevoked links follow this behavior too. The verification endpoint is retired (410). Guest links do not enable yacht browsing, Prev/Next or internal API access.
 
-## Project status
-The project was initialized as a Next.js MVP for a yacht claims management app and evolved beyond the initial scaffold. The current GitHub history shows concrete application work, not just a starter template.
+The director can send the invitation from **aftersales@yyachts.de**, the fixed From/Reply-To identity. The SMTP service must authorize that sender. A failed send is reported and the newly created grant is revoked. Manual link creation/copy remains available. Live SMTP configuration is still absent; the application does not claim a real invitation was delivered without provider acceptance. Local SMTP tests verify sender, recipient, direct URL and claim isolation. These owner instructions supersede older code-verification notes below.
 
-## Confirmed GitHub activity
-Recent commit history on the repo includes:
-- Fix claim creation API to use hullNumber instead of removed yachtId field
-- Use hullNumber as the natural identifier for yacht and related claim records
-- Remove unused yacht fields and technical sections to match the simplified After Sales data model
-- Create claim listing and creation API endpoints for the After Sales workflow
-- Create claim validation route so director approval/rejection gates goal workflow as second step
-- Add workflow validation fields to Claim so claim lifecycle can include approval and rejection as a required stage
-- Fix invalid clsx version in package.json to allow npm install to resolve dependencies
-- Add Deno workflow for linting and testing
-- Redirect the root route to the login page for the working app entry point
-- Initialize Next.js MVP scaffold for yacht claims management system with demo routes and UI pages
+---
 
-This indicates the project is progressing toward a real MVP, with claim workflow logic and data model adjustments already in the repository.
+# Prototype is the primary reference — 3 November 2026
 
-## What was built
-The project includes:
-- app shell and routing
-- login page
-- Work Hub page
-- yacht overview page
-- claim detail page
-- customer page (My Yacht)
-- supplier portal page
-- mock data for yachts, claims, comments, documents, suppliers
-- styling and UX foundation
-- initial route and API structure for auth, claims, yachts, and public supplier access
+The owner confirmed the version containing Prev/Next and EN/IT/ES/DE as authoritative. See [docs/PROTOTYPE_ALIGNMENT.md](docs/PROTOTYPE_ALIGNMENT.md) for the source comparison, restored controls and verification boundaries. Previous summaries must not substitute for the prototype. Current corrections include authorized Prev/Next navigation, four-language UI label wiring throughout the application, prototype card/list-row layouts, technical custom fields with units and protected yacht-level documents. User-authored content and existing data are preserved.
 
-## Important note
-The GitHub repo state and the local workspace state may differ if there are pending uncommitted changes or if Copilot edited files locally without syncing them to the repo.
+---
 
-## How to keep the project aligned
-Use this process:
-1. Backup the current work
-2. Check repo state with:
-   - git status
-   - git log --oneline
-   - git branch
-3. Create a feature branch before continuing
-   - git checkout -b feature/mvp-foundation
-4. Pull the latest repo version
-   - git fetch origin
-   - git checkout main
-   - git pull origin main
-5. Continue only on a clean branch
+# YY ASM — current project status (2 November 2026)
 
-## Recommended development path
-1. Auth + roles
-2. Work Hub
-3. Claim detail workflow
-4. Yacht overview and technical profile
-5. My Yacht customer flow
-6. Supplier portal
-7. Localization
-8. QA and deployment
+This file replaces the accumulated status notes. Historical notes are retained in [docs/PROJECT_HISTORY_2026-11-02.md](docs/PROJECT_HISTORY_2026-11-02.md). The original MVP brief remains on `main` (GitHub blob `599fb27d3af4aef3a94e12d75dbcfa25254cf464`). Source/deployment branch: `feature/staging-ready`; `main` has not been overwritten.
 
-## Local run commands
-From the project folder:
-- npm install
-- cp .env.example .env
-- npm run dev
+## Requirements traced to the original brief
 
-Then open:
-- http://localhost:3000
+| Original requirement | Implementation | Verification / limit |
+| --- | --- | --- |
+| App shell, routes, login | Next.js routes, signed database-backed login, logout | Build, auth and hosted tests; no default demo login |
+| Authentication, roles, customer restrictions | Director/staff, representatives assigned to yachts, supplier/dealer claim grants | Role/yacht/claim isolation, deactivation and revocation integration tests |
+| Internal operations dashboard / Work Hub | Real claims grouped by yacht, All/My work/Overdue/last-7-day updates, title/description/hull search, yacht/status/priority filters and summary counts | Server filters preserve access scope; due dates end at 23:59:59.999 UTC; recently updated means seven days |
+| Claim detail and lifecycle | Create, edit title/description/priority, yard team and supplier assignment, target date, warranty assessment, director approve/reject, status progression, closing/reopening and internal history | Invalid assignments/dates rejected, approval gate enforced, overdue excludes closed/rejected |
+| Yacht overview and technical profile | Create/list/detail/edit yachts, hull correction preserves linked records | Yacht/edit integration tests, duplicate and stale-edit conflict checks |
+| Customer / My Yacht | Real assigned yachts, links to claims, create claims, shared comments and protected files | Representative access tests; no mock substitution |
+| Supplier portal | Specific-email, expiring/revocable per-claim links; guest email-code verification; shared comments and uploads/downloads | Local SMTP integration passes; real delivery requires authorized SMTP configuration |
+| Supplier data | Director-maintained supplier directory; yard users can select supplier and responsible team member on a claim | Directory and assignment permissions tested; assignment alone NEVER grants access |
+| Localization-ready structure / Localization roadmap | Typed EN/IT/ES/DE dictionaries, app language selector with local preference, translated Work Hub and primary claim management controls | Build checked. Superseded by prototype alignment: translations are wired across application screens; user-authored text is unchanged |
+| Styling / UX foundation | Existing app styling retained; responsive dashboard and forms | Build verified; complete authenticated browser/mobile acceptance remains pending |
+| Mock data and initial APIs | Production pages use persistent scoped APIs; historical fixtures are not used as a live fallback | Source inspection and integration tests |
+| QA and deployment | Next.js CI, build/typecheck, disposable access/hosted/backup suites, Render persistent single-instance deployment | Live rollout must be verified for each source commit; no original Mac records auto-imported |
 
-Demo login:
-- admin@marine.com / password123
+## Later owner requirements included
 
-## Key recommendation
-Do not work directly on main if Copilot or local files may diverge. Always use a dedicated feature branch and commit small logical chunks.
+- Password policy: at least eight characters with a letter, digit and non-space special character, maximum 72 UTF-8 bytes; existing accounts unchanged.
+- Delivery date, 1/2-year yacht warranty and server-calculated expiry; leap-day anniversary clamped to 28 February.
+- Engine, genset, bow and stern thrusters, propeller(s), air conditioning, watermaker: brand/model/serial, plus power with unit where applicable.
+- Independent hull/deck painting product brand, paint type and color code.
+- Administrator may edit registered yacht data, including hull number; yacht links, claims, member access and documents preserved transactionally.
+- Authorized participants can use shared photos, documents and comments; internal content remains private to the yard.
 
-## Shared working principle
-The goal is to keep the web repo and local workspace aligned, avoid accidental overwrites, and continue the real product work without losing earlier progress.
+## Additional operational safeguards
 
-## Current recommendation
-- keep using the GitHub repo as the source of truth
-- use a feature branch for all new work
-- take a backup before any reset or overwrite
-- verify git status before and after each session
+- `npm run db:backup -- /secure/path/new-backup.db` creates a consistent SQLite snapshot, verifies integrity/FKs and refuses overwrite. Attachment bytes are included.
+- Hosted startup creates a verified pre-migration snapshot of a non-empty existing database when new migrations are pending. These snapshots remain on the SAME disk and are supplemental protection only.
+- `npm run test:backup` restores a test snapshot into a new database and checks claim and binary attachment recovery. Hosted tests simulate upgrading an existing database and verify a pre-migration snapshot.
+- No destructive resets, real seed records, mailbox changes or secret values are committed.
 
-## Project objective
-Build a functional MVP for yacht After Sales and claims management, including:
-- internal operations dashboard
-- yacht technical profile
-- claim lifecycle management
-- customer access restrictions
-- supplier claim portal
-- localization-ready structure
+## External prerequisites and release limits
 
-This file is intended to be a shareable summary of the current project session and working context.
+1. Configure an authorized SMTP sender/service using runtime secrets; validate delivery to a controlled real mailbox before inviting suppliers. Current implementation fails closed without SMTP. Invitations are copied for manual sending; automated invitation emailing is not promised.
+2. Select and activate an off-disk backup destination, schedule and retention. The snapshot tool and restore test are implemented; recurring/off-site backups are not activated.
+3. Complete authenticated browser/mobile acceptance with director, staff, representative, supplier and dealer. Automated API tests are not a substitute for that acceptance.
+4. Finalize production domain and operational monitoring. Account self-service activation/password reset and attachment malware scanning/quotas are further release hardening, not features specified by the original MVP brief.
 
-## Recovery checkpoint — 2 November 2026
-
-Recovered selected Mac changes on feature/recover-local-mvp. The Mac Work Hub layout now reads persistent claims, shows real yacht names, links to claim details and reports fetch failures instead of substituting demo claims. Recovered yacht list/create endpoints, persistent claim detail/update and validation decision checks. Kept list/create API at /api/claims; excluded misplaced duplicate routes. Yacht detail reads by hull number. Added dependency lock and missing bcrypt types.
-
-Original uploaded ZIP and database preserved separately; database and environment are not committed. Existing Mac database contains one yacht and one claim. For a fresh setup run npm ci, npm run prisma:generate and npm run prisma:push with DATABASE_URL configured. No seed script currently exists.
-
-Validation: production build and TypeScript passed; HTTP checks confirmed database claim list/detail, yacht detail, invalid decision (400), missing claim (404), Work Hub/login (200), root redirect (307). Browser visual verification remains pending.
-
-Limitations: authentication/authorization remain prototype-only; supplier portal and My Yacht still use demo sources. Action buttons and workflow enforcement require further work. This recovery does not make the application production-ready. Existing Next.js dependency needs a separate security update.
+Do not describe this as a fully commissioned production service while these limits remain. See README.md and STAGING_DEPLOYMENT.md for safe operations.

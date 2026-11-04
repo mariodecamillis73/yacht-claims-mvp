@@ -1,48 +1,46 @@
 "use client";
-import { useEffect, useState } from "react";
-export default function SupplierPortalPage({
-  params,
-}: {
-  params: { token: string };
-}) {
-  const [data, setData] = useState<any>(null);
+import { useLanguage } from "@/components/language-provider";
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "next/navigation";
+export default function SupplierPortalPage() {
+  const { tr, language } = useLanguage();
+
+  const params = useParams<{ token: string }>();
+  const [resource, setResource] = useState<{ scope: string; value: any } | null>(null);
+  const activeBase = useRef<string | null>(null);
   const [error, setError] = useState("");
-  const [code, setCode] = useState("");
-  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const base = `/api/public/claims/${params.token}`;
+  const data = resource?.scope === base ? resource.value : null;
+  function setData(value: any) {
+    setResource(value ? { scope: base, value } : null);
+  }
   async function load() {
     const r = await fetch(base);
+    const value = r.ok ? await r.json() : null;
+    if (activeBase.current !== base) return;
     if (r.ok) {
-      setData(await r.json());
+      setData(value);
       setError("");
-    } else if (r.status !== 401) {
+    } else {
+      setData(null);
       setError("This invitation is unavailable or expired.");
     }
   }
   useEffect(() => {
-    load().catch(() => setError("Unable to connect"));
-  }, [base]);
-  async function verify(send: boolean) {
-    setBusy(true);
+    activeBase.current = base;
+    setMessage("");
+    setBusy(false);
+    setLoading(true);
+    setData(null);
     setError("");
-    try {
-      const r = await fetch(base + "/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(send ? {} : { code }),
-      });
-      const b = await r.json();
-      if (!r.ok) throw new Error(b.error);
-      if (send) setSent(true);
-      else await load();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
+    load()
+      .catch(() => { if (activeBase.current === base) setError("Unable to connect"); })
+      .finally(() => { if (activeBase.current === base) setLoading(false); });
+    return () => { activeBase.current = null; };
+  }, [base]);
   async function comment() {
     setBusy(true);
     try {
@@ -51,13 +49,20 @@ export default function SupplierPortalPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
       });
-      if (!r.ok) throw new Error((await r.json()).error);
+      if (activeBase.current !== base) return;
+      if (!r.ok) {
+        if (r.status === 404) {
+          setData(null);
+          throw new Error("This invitation is unavailable or expired.");
+        }
+        throw new Error((await r.json()).error);
+      }
       setMessage("");
       await load();
     } catch (e) {
-      setError((e as Error).message);
+      if (activeBase.current === base) setError((e as Error).message);
     } finally {
-      setBusy(false);
+      if (activeBase.current === base) setBusy(false);
     }
   }
   async function upload(file: File) {
@@ -66,70 +71,47 @@ export default function SupplierPortalPage({
       const body = new FormData();
       body.set("file", file);
       const r = await fetch(base + "/documents", { method: "POST", body });
-      if (!r.ok) throw new Error((await r.json()).error);
+      if (activeBase.current !== base) return;
+      if (!r.ok) {
+        if (r.status === 404) {
+          setData(null);
+          throw new Error("This invitation is unavailable or expired.");
+        }
+        throw new Error((await r.json()).error);
+      }
       await load();
     } catch (e) {
-      setError((e as Error).message);
+      if (activeBase.current === base) setError((e as Error).message);
     } finally {
-      setBusy(false);
+      if (activeBase.current === base) setBusy(false);
     }
   }
   return (
     <main className="container">
       <div className="section">
-        <h1>YYachts · Claim access</h1>
-        {error && <p role="alert">{error}</p>}
+        <h1>{tr("YYachts · Claim access")}</h1>
+        {error && <p role="alert">{tr(error)}</p>}
         {!data ? (
-          <>
-            <p>
-              Verify access using a code sent to the email address authorized by
-              the yard.
-            </p>
-            <button
-              className="button"
-              disabled={busy}
-              onClick={() => verify(true)}
-            >
-              Send verification code
-            </button>
-            {sent && (
-              <>
-                <p>Check your email. The code expires in 10 minutes.</p>
-                <input
-                  className="input"
-                  aria-label="Verification code"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                />
-                <button
-                  className="button"
-                  disabled={busy || code.length !== 6}
-                  onClick={() => verify(false)}
-                >
-                  Verify and open claim
-                </button>
-              </>
-            )}
-          </>
+          loading ? (
+            <p>{tr("Loading claim...")}</p>
+          ) : null
         ) : (
           <>
             <h2>{data.claim.title}</h2>
             <p>
-              {data.claim.status} · {data.claim.id}
+              {tr(data.claim.status)} · {data.claim.id}
             </p>
             <p>{data.claim.description}</p>
-            <h3>Comments</h3>
+            <h3>{tr("Comments")}</h3>
             {data.comments.map((c: any) => (
               <div className="comment" key={c.id}>
-                <small>{new Date(c.createdAt).toLocaleString()}</small>
+                <small>{new Date(c.createdAt).toLocaleString(language)}</small>
                 <p>{c.message}</p>
               </div>
             ))}
             <textarea
               className="textarea"
-              aria-label="Response"
+              aria-label={tr("Response")}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
@@ -139,9 +121,9 @@ export default function SupplierPortalPage({
               disabled={busy || !message.trim()}
               onClick={comment}
             >
-              Submit response
+              {tr("Submit response")}
             </button>
-            <h3>Photos and documents</h3>
+            <h3>{tr("Photos and documents")}</h3>
             {data.documents.map((d: any) => (
               <div key={d.id}>
                 {d.mimeType.startsWith("image/") && (
@@ -163,7 +145,7 @@ export default function SupplierPortalPage({
               </div>
             ))}
             <label>
-              Upload photo or document (max 5 MB)
+              {tr("Upload photo or document (max 5 MB)")}
               <input
                 type="file"
                 disabled={busy}

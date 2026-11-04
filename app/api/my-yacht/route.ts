@@ -12,7 +12,13 @@ export async function GET(request: Request) {
       where: { hullNumber: { in: members.map((m) => m.hullNumber) } },
       include: {
         claims: {
-          select: { id: true, title: true, status: true, priority: true },
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            priority: true,
+            updatedAt: true,
+          },
         },
       },
     });

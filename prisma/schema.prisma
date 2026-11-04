@@ -29,6 +29,11 @@ model Yacht {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  deliveryDate DateTime?
+  warrantyYears Int?
+  warrantyExpiresAt DateTime?
+  equipmentJson String @default("{}")
+
   claims Claim[]
 }
 
@@ -53,6 +58,7 @@ model Claim {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   closedAt         DateTime?
+  dueDate          DateTime?
 
   comments     Comment[]
   documents    Document[]

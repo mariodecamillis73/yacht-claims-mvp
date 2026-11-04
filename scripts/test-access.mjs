@@ -19,6 +19,7 @@ const env = {
   SMTP_USER: "",
   SMTP_PASSWORD: "",
   MAIL_FROM: "test@example.invalid",
+  APP_URL: "https://yy-asm.example.invalid",
 };
 let server;
 let db;
@@ -199,6 +200,24 @@ try {
     assert.equal(r.status, 200, JSON.stringify(r.data));
     cookies[role] = r.cookie;
   }
+  const firstClaim = (await req("/api/claims/A1", { cookie: cookies.director }))
+    .data;
+  assert.equal(firstClaim.previousClaimId, null);
+  assert.equal(firstClaim.nextClaimId, "A2");
+  const middleClaim = (
+    await req("/api/claims/A2", { cookie: cookies.director })
+  ).data;
+  assert.equal(middleClaim.previousClaimId, "A1");
+  assert.equal(middleClaim.nextClaimId, "B1");
+  const lastClaim = (await req("/api/claims/B1", { cookie: cookies.director }))
+    .data;
+  assert.equal(lastClaim.previousClaimId, "A2");
+  assert.equal(lastClaim.nextClaimId, null);
+  const representativeNeighbors = (
+    await req("/api/claims/A2", { cookie: cookies.representative })
+  ).data;
+  assert.equal(representativeNeighbors.previousClaimId, "A1");
+  assert.equal(representativeNeighbors.nextClaimId, null);
   assert.equal(
     (await req("/api/users", { cookie: cookies.staff })).status,
     403,
@@ -224,6 +243,46 @@ try {
     ).status,
     201,
   );
+  for (const [candidate, expected] of [
+    ["abcd12@", 400],
+    ["abcdefgh1", 400],
+    ["abcdefgh@", 400],
+    ["1234567@", 400],
+    ["abc12345 ", 400],
+    ["a".repeat(71) + "1@", 400],
+    ["abcd123@", 201],
+    ["lowercase9#", 201],
+    ["letters9 @", 201],
+  ]) {
+    const email = `policy-${Math.random().toString(36).slice(2)}@example.invalid`;
+    const result = await req("/api/users", {
+      cookie: cookies.director,
+      method: "POST",
+      body: {
+        email,
+        password: candidate,
+        firstName: "Policy",
+        lastName: "Test",
+        role: "staff",
+      },
+    });
+    assert.equal(
+      result.status,
+      expected,
+      `Password policy case must return ${expected}`,
+    );
+    if (expected === 201) {
+      assert.equal(
+        (
+          await req("/api/auth/login", {
+            method: "POST",
+            body: { email, password: candidate },
+          })
+        ).status,
+        200,
+      );
+    }
+  }
   const newLogin = await req("/api/auth/login", {
     method: "POST",
     body: { email: "new@example.invalid", password },
@@ -354,7 +413,7 @@ try {
   assert.equal(grant.status, 201);
   const token = grant.data.path.split("/").pop();
   const portal = "/api/public/claims/" + token;
-  assert.equal((await req(portal)).status, 401);
+  assert.equal((await req(portal)).status, 200);
   let r = await req("/api/claims/A1", { cookie: cookies.supplier });
   assert.equal(r.status, 200);
   assert.equal(r.data.comments.length, 1);
@@ -382,31 +441,43 @@ try {
     ).status,
     403,
   );
+  const guest = "";
+  const guestNeighbors = (await req(portal)).data;
+  assert.equal(guestNeighbors.previousClaimId, null);
+  assert.equal(guestNeighbors.nextClaimId, null);
   assert.equal(
     (await req(portal + "/verify", { method: "POST", body: {} })).status,
+    410,
+  );
+  mail = "";
+  const emailed = await req("/api/claims/A1/shares", {
+    cookie: cookies.director,
+    method: "POST",
+    body: {
+      email: "delivery@example.invalid",
+      role: "supplier",
+      days: 2,
+      sendEmail: true,
+    },
+  });
+  assert.equal(emailed.status, 201, JSON.stringify(emailed.data));
+  assert.equal(emailed.data.emailSent, true);
+  assert.equal(emailed.data.sender, "aftersales@yyachts.de");
+  assert.ok(mail.includes("aftersales@yyachts.de"));
+  assert.ok(mail.includes("Reply-To: aftersales@yyachts.de"));
+  assert.ok(!mail.includes("test@example.invalid"));
+  assert.ok(mail.includes("https://yy-asm.example.invalid"));
+  const deliveredMail = mail
+    .replace(/=\r?\n/g, "")
+    .replace(/=([0-9A-F]{2})/gi, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16)),
+    );
+  assert.ok(deliveredMail.includes(emailed.data.path.split("/").pop()));
+  assert.ok(!/verification code is [0-9]/.test(mail));
+  assert.equal(
+    (await req("/api/public/claims/" + emailed.data.path.split("/").pop()))
+      .status,
     200,
-  );
-  assert.equal(
-    (await req(portal + "/verify", { method: "POST", body: {} })).status,
-    429,
-  );
-  const code = mail.match(/code is (\d{6})/)?.[1];
-  assert.ok(code, "Local SMTP must receive code");
-  assert.equal(
-    (
-      await req(portal + "/verify", {
-        method: "POST",
-        body: { code: "000000" },
-      })
-    ).status,
-    401,
-  );
-  r = await req(portal + "/verify", { method: "POST", body: { code } });
-  assert.equal(r.status, 200);
-  const guest = r.cookie;
-  assert.equal(
-    (await req(portal + "/verify", { method: "POST", body: { code } })).status,
-    401,
   );
   r = await req(portal, { cookie: guest });
   assert.equal(r.status, 200);
@@ -458,17 +529,18 @@ try {
           viewport: { width: 1280, height: 900 },
         });
         const split = cookie.indexOf("=");
-        await context.addCookies([
-          {
-            name: cookie.slice(0, split),
-            value: cookie.slice(split + 1),
-            domain: "127.0.0.1",
-            path: "/",
-            httpOnly: true,
-            secure: false,
-            sameSite: "Lax",
-          },
-        ]);
+        if (cookie)
+          await context.addCookies([
+            {
+              name: cookie.slice(0, split),
+              value: cookie.slice(split + 1),
+              domain: "127.0.0.1",
+              path: "/",
+              httpOnly: true,
+              secure: false,
+              sameSite: "Lax",
+            },
+          ]);
         const page = await context.newPage();
         const errors = [];
         page.on("pageerror", (e) => errors.push(e.message));
@@ -524,13 +596,645 @@ try {
     (await req("/api/claims/A2", { cookie: cookies.dealer })).status,
     404,
   );
+  const yacht = await req("/api/yachts", {
+    cookie: cookies.staff,
+    method: "POST",
+    body: {
+      hullNumber: "flow",
+      name: "Workflow test",
+      yearBuilt: 2026,
+      deliveryDate: "2026-11-02",
+      warrantyYears: 2,
+      technicalProfile: {
+        equipment: Object.fromEntries(
+          [
+            "engine",
+            "genset",
+            "bowThruster",
+            "sternThruster",
+            "propellers",
+            "airConditioning",
+            "watermaker",
+          ].map((key) => [
+            key,
+            {
+              brand: "Brand " + key,
+              model: "Model",
+              power: key === "propellers" ? "" : "10 kW",
+              serialNumber: "SN-" + key,
+            },
+          ]),
+        ),
+        painting: {
+          hullPainting: {
+            brand: "Hull brand",
+            paintType: "Polyurethane",
+            colorCode: "RAL 9010",
+          },
+          deckPainting: {
+            brand: "Deck brand",
+            paintType: "Non-slip",
+            colorCode: "RAL 7035",
+          },
+        },
+      },
+    },
+  });
+  assert.equal(yacht.status, 201);
+  assert.equal(yacht.data.deliveryDate, "2026-11-02T00:00:00.000Z");
+  assert.equal(yacht.data.warrantyExpiresAt, "2028-11-02T00:00:00.000Z");
+  const profile = (await req("/api/yachts/FLOW", { cookie: cookies.staff }))
+    .data.technicalProfile;
+  assert.deepEqual(profile, yacht.data.technicalProfile);
+  assert.equal(profile.painting.deckPainting.colorCode, "RAL 7035");
+  for (const key of [
+    "engine",
+    "genset",
+    "bowThruster",
+    "sternThruster",
+    "propellers",
+    "airConditioning",
+    "watermaker",
+  ])
+    assert.equal(profile.equipment[key].serialNumber, "SN-" + key);
+  assert.equal(
+    (await req("/api/yachts/FLOW", { cookie: cookies.supplier })).status,
+    404,
+  );
+  assert.equal(
+    (await req("/api/yachts/FLOW", { cookie: cookies.representative })).status,
+    404,
+  );
+  const baseYacht = { hullNumber: "DATE", name: "Date test", yearBuilt: 2024 };
+  for (const fields of [
+    { deliveryDate: "2026-02-30", warrantyYears: 1 },
+    { deliveryDate: "2026-01-01", warrantyYears: 3 },
+    { warrantyYears: 1 },
+    { deliveryDate: "2026-01-01" },
+  ]) {
+    assert.equal(
+      (
+        await req("/api/yachts", {
+          cookie: cookies.staff,
+          method: "POST",
+          body: { ...baseYacht, ...fields },
+        })
+      ).status,
+      400,
+    );
+  }
+  const leap = await req("/api/yachts", {
+    cookie: cookies.staff,
+    method: "POST",
+    body: { ...baseYacht, deliveryDate: "2024-02-29", warrantyYears: 1 },
+  });
+  assert.equal(leap.status, 201);
+  assert.equal(leap.data.warrantyExpiresAt, "2025-02-28T00:00:00.000Z");
+  // Existing yachts stay readable after the additive migration, with no invented delivery date.
+  const legacyRow = await db.yacht.findFirst({
+    where: { hullNumber: { notIn: ["FLOW", "DATE"] } },
+  });
+  assert.equal(legacyRow.deliveryDate, null);
+  assert.equal(legacyRow.warrantyExpiresAt, null);
+
+  assert.equal(
+    (
+      await req("/api/yachts", {
+        cookie: cookies.staff,
+        method: "POST",
+        body: { hullNumber: "flow", name: "Duplicate", yearBuilt: 2026 },
+      })
+    ).status,
+    409,
+  );
+  const draft = await req("/api/claims", {
+    cookie: cookies.staff,
+    method: "POST",
+    body: {
+      yachtHullNumber: "FLOW",
+      title: "Workflow claim",
+      description: "Test description",
+      priority: "medium",
+    },
+  });
+  assert.equal(draft.status, 201, JSON.stringify(draft.data));
+  const flowId = draft.data.id;
+  assert.ok(flowId);
+  const editBody = {
+    hullNumber: "FLOW",
+    name: "Updated yacht",
+    yearBuilt: 2025,
+    ownerId: "New owner",
+    captainName: "New captain",
+    deliveryDate: "2026-12-01",
+    warrantyYears: 1,
+    technicalProfile: yacht.data.technicalProfile,
+    updatedAt: yacht.data.updatedAt,
+  };
+  for (const role of ["staff", "supplier", "representative", "dealer"])
+    assert.equal(
+      (
+        await req("/api/yachts/FLOW", {
+          cookie: cookies[role],
+          method: "PATCH",
+          body: editBody,
+        })
+      ).status,
+      403,
+    );
+  assert.equal(
+    (
+      await req("/api/yachts/FLOW", {
+        cookie: cookies.director,
+        method: "PATCH",
+        body: { ...editBody, warrantyYears: 3 },
+      })
+    ).status,
+    400,
+  );
+  const updated = await req("/api/yachts/FLOW", {
+    cookie: cookies.director,
+    method: "PATCH",
+    body: editBody,
+  });
+  assert.equal(updated.status, 200, JSON.stringify(updated.data));
+  assert.equal(updated.data.name, "Updated yacht");
+  assert.equal(updated.data.warrantyExpiresAt, "2027-12-01T00:00:00.000Z");
+  assert.deepEqual(updated.data.technicalProfile, yacht.data.technicalProfile);
+  assert.equal(
+    (
+      await req("/api/yachts/FLOW", {
+        cookie: cookies.director,
+        method: "PATCH",
+        body: editBody,
+      })
+    ).status,
+    409,
+  );
+  await db.yachtMember.create({
+    data: { userId: "representative", hullNumber: "FLOW" },
+  });
+  const collision = await req("/api/yachts/FLOW", {
+    cookie: cookies.director,
+    method: "PATCH",
+    body: { ...editBody, updatedAt: updated.data.updatedAt, hullNumber: "A" },
+  });
+  assert.equal(collision.status, 409);
+  const renamed = await req("/api/yachts/FLOW", {
+    cookie: cookies.director,
+    method: "PATCH",
+    body: {
+      ...editBody,
+      updatedAt: updated.data.updatedAt,
+      hullNumber: "FLOW2",
+      deliveryDate: undefined,
+      warrantyYears: undefined,
+    },
+  });
+  assert.equal(renamed.status, 200, JSON.stringify(renamed.data));
+  assert.equal(renamed.data.deliveryDate, null);
+  assert.equal(renamed.data.warrantyExpiresAt, null);
+  assert.equal(
+    (await db.claim.findUnique({ where: { id: flowId } })).yachtHullNumber,
+    "FLOW2",
+  );
+  assert.equal(
+    (await req("/api/yachts/FLOW2", { cookie: cookies.representative })).status,
+    200,
+  );
+  assert.equal(
+    (await req("/api/yachts/FLOW", { cookie: cookies.director })).status,
+    404,
+  );
+  assert.ok(
+    await db.activityLog.findFirst({
+      where: {
+        entityType: "yacht",
+        entityId: "FLOW2",
+        action: "updated",
+        actorId: "director",
+      },
+    }),
+  );
+
+  const supplierRow = await req("/api/suppliers", {
+    cookie: cookies.director,
+    method: "POST",
+    body: {
+      name: "Contact",
+      companyName: "Supplier company",
+      email: "supplier@example.invalid",
+      phone: "1234",
+    },
+  });
+  assert.equal(supplierRow.status, 201);
+  assert.equal(
+    (await req("/api/suppliers", { cookie: cookies.staff })).status,
+    200,
+  );
+  for (const role of ["representative", "supplier", "dealer"]) {
+    assert.equal(
+      (await req("/api/suppliers", { cookie: cookies[role] })).status,
+      403,
+    );
+    assert.equal(
+      (await req("/api/team", { cookie: cookies[role] })).status,
+      403,
+    );
+  }
+  assert.equal(
+    (
+      await req("/api/suppliers", {
+        cookie: cookies.staff,
+        method: "POST",
+        body: { name: "X", companyName: "Y", email: "s@example.invalid" },
+      })
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await req("/api/suppliers", {
+        cookie: cookies.director,
+        method: "PATCH",
+        body: {
+          id: supplierRow.data.id,
+          name: "Updated contact",
+          companyName: "Supplier company",
+          email: "supplier@example.invalid",
+        },
+      })
+    ).status,
+    200,
+  );
+  const managed = await req(`/api/claims/${flowId}`, {
+    cookie: cookies.staff,
+    method: "PATCH",
+    body: {
+      assignedTo: "staff",
+      supplierId: supplierRow.data.id,
+      warrantyStatus: "covered",
+      dueDate: "2000-01-01",
+      priority: "critical",
+    },
+  });
+  assert.equal(managed.status, 200, JSON.stringify(managed.data));
+  assert.equal(managed.data.warrantyStatus, "covered");
+  assert.equal(managed.data.dueDate, "2000-01-01T23:59:59.999Z");
+  assert.equal(
+    (await req(`/api/claims/${flowId}`, { cookie: cookies.supplier })).status,
+    404,
+  );
+  for (const body of [
+    { assignedTo: "representative" },
+    { supplierId: "missing" },
+    { dueDate: "2026-02-30" },
+    { warrantyStatus: "unknown" },
+    {},
+  ])
+    assert.equal(
+      (
+        await req(`/api/claims/${flowId}`, {
+          cookie: cookies.staff,
+          method: "PATCH",
+          body,
+        })
+      ).status,
+      400,
+    );
+  assert.ok(
+    (await req("/api/claims?filter=mine", { cookie: cookies.staff })).data.some(
+      (c) => c.id === flowId,
+    ),
+  );
+  assert.ok(
+    (
+      await req("/api/claims?filter=overdue", { cookie: cookies.director })
+    ).data.some((c) => c.id === flowId),
+  );
+  assert.ok(
+    !(
+      await req("/api/claims?filter=overdue", { cookie: cookies.supplier })
+    ).data.some((c) => c.id === flowId),
+  );
+  assert.equal(
+    (await req("/api/claims?filter=bogus", { cookie: cookies.director }))
+      .status,
+    400,
+  );
+  const externalView = (
+    await req(`/api/claims/${flowId}`, { cookie: cookies.representative })
+  ).data.claim;
+  assert.equal(externalView.assignedTo, undefined);
+  assert.equal(externalView.supplierId, undefined);
+  assert.equal(externalView.warrantyStatus, undefined);
+  assert.equal(
+    (
+      await req(`/api/claims/${flowId}`, {
+        cookie: cookies.staff,
+        method: "PATCH",
+        body: { status: "closed" },
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await req(`/api/claims/${flowId}/validate`, {
+        cookie: cookies.director,
+        method: "POST",
+        body: { decision: "approved" },
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await req(`/api/claims/${flowId}/validate`, {
+        cookie: cookies.director,
+        method: "POST",
+        body: { decision: "approved" },
+      })
+    ).status,
+    409,
+  );
+  for (const status of ["in_progress", "supplier_pending", "closed"]) {
+    assert.equal(
+      (
+        await req(`/api/claims/${flowId}`, {
+          cookie: cookies.staff,
+          method: "PATCH",
+          body: { status },
+        })
+      ).status,
+      200,
+    );
+  }
+  const closed = await req(`/api/claims/${flowId}`, { cookie: cookies.staff });
+  assert.ok(closed.data.claim.closedAt);
+  assert.ok(
+    !(
+      await req("/api/claims?filter=overdue", { cookie: cookies.director })
+    ).data.some((c) => c.id === flowId),
+  );
+  assert.equal(
+    closed.data.activity.filter((x) => x.action === "status_changed").length,
+    3,
+  );
+  assert.equal(
+    (
+      await req(`/api/claims/${flowId}`, {
+        cookie: cookies.staff,
+        method: "PATCH",
+        body: { status: "assigned" },
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await req(`/api/claims/${flowId}`, {
+        cookie: cookies.staff,
+        method: "PATCH",
+        body: { status: "in_progress" },
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (await req(`/api/claims/${flowId}`, { cookie: cookies.staff })).data.claim
+      .closedAt,
+    null,
+  );
+  const concurrentSnapshot = (
+    await req(`/api/claims/${flowId}`, { cookie: cookies.staff })
+  ).data.claim;
+  const newerClaim = await req(`/api/claims/${flowId}`, {
+    cookie: cookies.director,
+    method: "PATCH",
+    body: {
+      title: "Concurrent update preserved",
+      updatedAt: concurrentSnapshot.updatedAt,
+    },
+  });
+  assert.equal(newerClaim.status, 200);
+  assert.ok(
+    Date.parse(newerClaim.data.updatedAt) >
+      Date.parse(concurrentSnapshot.updatedAt),
+  );
+  const staleSave = await req(`/api/claims/${flowId}`, {
+    cookie: cookies.staff,
+    method: "PATCH",
+    body: {
+      title: "Must not overwrite",
+      updatedAt: concurrentSnapshot.updatedAt,
+    },
+  });
+  assert.equal(staleSave.status, 409);
+  assert.equal(
+    (await req(`/api/claims/${flowId}`, { cookie: cookies.staff })).data.claim
+      .title,
+    "Concurrent update preserved",
+  );
+  const freshSave = await req(`/api/claims/${flowId}`, {
+    cookie: cookies.staff,
+    method: "PATCH",
+    body: {
+      description: "Saved after refresh",
+      updatedAt: newerClaim.data.updatedAt,
+    },
+  });
+  assert.equal(freshSave.status, 200);
+  assert.equal(
+    (await req(`/api/claims/${flowId}`, { cookie: cookies.staff })).data.claim
+      .description,
+    "Saved after refresh",
+  );
+  const yachtBefore = (
+    await req("/api/yachts/FLOW2", { cookie: cookies.director })
+  ).data;
+  const customFields = [
+    {
+      id: "diameter",
+      section: "propellers",
+      name: "Diameter",
+      value: "600",
+      unit: "mm",
+    },
+  ];
+  const customEdit = await req("/api/yachts/FLOW2", {
+    cookie: cookies.director,
+    method: "PATCH",
+    body: {
+      hullNumber: "FLOW2",
+      name: yachtBefore.name,
+      yearBuilt: yachtBefore.yearBuilt,
+      ownerId: yachtBefore.ownerId,
+      captainName: yachtBefore.captainName,
+      updatedAt: yachtBefore.updatedAt,
+      technicalProfile: { ...yachtBefore.technicalProfile, customFields },
+    },
+  });
+  assert.equal(customEdit.status, 200, JSON.stringify(customEdit.data));
+  assert.deepEqual(
+    (await req("/api/yachts/FLOW2", { cookie: cookies.representative })).data
+      .technicalProfile.customFields,
+    customFields,
+  );
+  const yachtForm = new FormData();
+  yachtForm.set("file", new Blob(["yacht-doc-proof"]), "yacht.txt");
+  yachtForm.set("visibility", "shared");
+  const yachtUpload = await req("/api/yachts/FLOW2/documents", {
+    cookie: cookies.staff,
+    method: "POST",
+    form: yachtForm,
+  });
+  assert.equal(yachtUpload.status, 201);
+  const yachtDocPath = `/api/yachts/FLOW2/documents/${yachtUpload.data.id}`;
+  assert.equal(
+    (await req(yachtDocPath, { cookie: cookies.representative })).data,
+    "yacht-doc-proof",
+  );
+  assert.equal(
+    (await req(yachtDocPath, { cookie: cookies.supplier })).status,
+    404,
+  );
+  assert.equal(
+    (
+      await req(`/api/yachts/A/documents/${yachtUpload.data.id}`, {
+        cookie: cookies.director,
+      })
+    ).status,
+    404,
+  );
+  const privateYachtForm = new FormData();
+  privateYachtForm.set(
+    "file",
+    new Blob(["private-yacht-proof"]),
+    "private.txt",
+  );
+  privateYachtForm.set("visibility", "internal");
+  const privateYachtDoc = await req("/api/yachts/FLOW2/documents", {
+    cookie: cookies.director,
+    method: "POST",
+    form: privateYachtForm,
+  });
+  assert.equal(privateYachtDoc.status, 201);
+  assert.equal(
+    (
+      await req(`/api/yachts/FLOW2/documents/${privateYachtDoc.data.id}`, {
+        cookie: cookies.representative,
+      })
+    ).status,
+    404,
+  );
+  assert.equal(
+    (await req("/api/yachts/FLOW2", { cookie: cookies.representative })).data
+      .documents.length,
+    1,
+  );
+  const reviewDraft = await req("/api/claims", {
+    cookie: cookies.staff,
+    method: "POST",
+    body: {
+      yachtHullNumber: "FLOW2",
+      title: "Review current version",
+      description: "Original review text",
+    },
+  });
+  assert.equal(reviewDraft.status, 201);
+  const reviewEdit = await req(`/api/claims/${reviewDraft.data.id}`, {
+    cookie: cookies.staff,
+    method: "PATCH",
+    body: {
+      description: "Changed before director approval",
+      updatedAt: reviewDraft.data.updatedAt,
+    },
+  });
+  assert.equal(reviewEdit.status, 200);
+  assert.equal(
+    (
+      await req(`/api/claims/${reviewDraft.data.id}/validate`, {
+        cookie: cookies.director,
+        method: "POST",
+        body: { decision: "approved", updatedAt: reviewDraft.data.updatedAt },
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await req(`/api/claims/${reviewDraft.data.id}`, {
+        cookie: cookies.director,
+      })
+    ).data.claim.validationStatus,
+    "pending",
+  );
+  assert.equal(
+    (
+      await req(`/api/claims/${reviewDraft.data.id}/validate`, {
+        cookie: cookies.director,
+        method: "POST",
+        body: { decision: "approved", updatedAt: reviewEdit.data.updatedAt },
+      })
+    ).status,
+    200,
+  );
+  const raceClaim = await req("/api/claims", {cookie:cookies.staff,method:"POST",body:{yachtHullNumber:"FLOW2",title:"Simultaneous saves",description:"Same revision"}});
+  assert.equal(raceClaim.status,201);
+  const raceSaves = await Promise.all([0,1,2,3].map(index=>req(`/api/claims/${raceClaim.data.id}`,{cookie:index%2 ? cookies.staff : cookies.director,method:"PATCH",body:{title:`Winning edit ${index}`,updatedAt:raceClaim.data.updatedAt}})));
+  assert.equal(raceSaves.filter(result=>result.status===200).length,1,JSON.stringify(raceSaves.map(r=>({status:r.status,data:r.data}))));
+  assert.equal(raceSaves.filter(result=>result.status===409).length,3);
+  assert.equal(await db.activityLog.count({where:{claimId:raceClaim.data.id,action:"updated"}}),1);
+  const raceWinner = raceSaves.find(result=>result.status===200).data;
+  const raceReviews = await Promise.all(["approved","rejected"].map(decision=>req(`/api/claims/${raceClaim.data.id}/validate`,{cookie:cookies.director,method:"POST",body:{decision,rejectionReason:"Concurrent decision",updatedAt:raceWinner.updatedAt}})));
+  assert.equal(raceReviews.filter(result=>result.status===200).length,1);
+  assert.equal(raceReviews.filter(result=>result.status===409).length,1);
+  assert.equal(await db.activityLog.count({where:{claimId:raceClaim.data.id,action:{in:["approved","rejected"]}}}),1);
+  const documentsBeforeInvalid = await db.document.count({where:{claimId:raceClaim.data.id}});
+  const invalidVisibility = new FormData(); invalidVisibility.set("file",new Blob(["must not become shared"]),"private.txt"); invalidVisibility.set("visibility","private");
+  assert.equal((await req(`/api/claims/${raceClaim.data.id}/documents`,{cookie:cookies.staff,method:"POST",form:invalidVisibility})).status,400);
+  assert.equal(await db.document.count({where:{claimId:raceClaim.data.id}}),documentsBeforeInvalid);
+  const maxFile = new FormData(); maxFile.set("file",new Blob([new Uint8Array(5*1024*1024)]),"max.bin"); maxFile.set("visibility","shared");
+  const maxUpload = await req(`/api/claims/${raceClaim.data.id}/documents`,{cookie:cookies.staff,method:"POST",form:maxFile});
+  assert.equal(maxUpload.status,201);
+  const maxDownload = await fetch(base+`/api/claims/${raceClaim.data.id}/documents/${maxUpload.data.id}`,{headers:{cookie:cookies.staff}});
+  assert.equal(maxDownload.status,200);
+  assert.equal((await maxDownload.arrayBuffer()).byteLength,5*1024*1024);
+  const overFile = new FormData(); overFile.set("file",new Blob([new Uint8Array(5*1024*1024+1)]),"too-big.bin");
+  assert.equal((await req(`/api/claims/${raceClaim.data.id}/documents`,{cookie:cookies.staff,method:"POST",form:overFile})).status,413);
+  const svg = new FormData(); svg.set("file",new Blob(['<svg xmlns="http://www.w3.org/2000/svg"><script>invalidFixture()</script></svg>'],{type:"image/svg+xml"}),"image.jpg"); svg.set("visibility","shared");
+  const svgUpload = await req(`/api/claims/${raceClaim.data.id}/documents`,{cookie:cookies.staff,method:"POST",form:svg});
+  assert.equal(svgUpload.status,201);
+  assert.equal(svgUpload.data.mimeType,"application/octet-stream");
+  const externalGrant = await req(`/api/claims/${raceClaim.data.id}/shares`,{cookie:cookies.director,method:"POST",body:{email:"limits@example.invalid",role:"dealer",days:1}});
+  const externalPath = "/api/public/claims/"+externalGrant.data.path.split("/").pop();
+  const svgResponse = await fetch(base+externalPath+`/documents/${svgUpload.data.id}`);
+  assert.equal(svgResponse.status,200);
+  assert.ok(svgResponse.headers.get("content-disposition").startsWith("attachment"));
+  assert.ok(svgResponse.headers.get("content-security-policy").includes("sandbox"));
+  await svgResponse.arrayBuffer();
+  await db.claimGrant.update({where:{id:externalGrant.data.id},data:{expiresAt:new Date(Date.now()-1000)}});
+  assert.equal((await req(externalPath)).status,404);
+  assert.equal((await req(externalPath+`/documents/${svgUpload.data.id}`)).status,404);
+  assert.equal((await req(externalPath+"/comments",{method:"POST",body:{message:"Expired access"}})).status,404);
+  const expiredUpload = new FormData(); expiredUpload.set("file",new Blob(["expired"]),"expired.txt");
+  assert.equal((await req(externalPath+"/documents",{method:"POST",form:expiredUpload})).status,404);
+  const revokeGrant = await req(`/api/claims/${raceClaim.data.id}/shares`,{cookie:cookies.director,method:"POST",body:{email:"revoke@example.invalid",role:"supplier",days:1}});
+  const revokePath = "/api/public/claims/"+revokeGrant.data.path.split("/").pop();
+  assert.equal((await req(revokePath)).status,200);
+  assert.equal((await req(`/api/claims/${raceClaim.data.id}/shares`,{cookie:cookies.director,method:"DELETE",body:{id:revokeGrant.data.id}})).status,200);
+  assert.equal((await req(revokePath)).status,404);
+  assert.equal((await req(revokePath+"/comments",{method:"POST",body:{message:"Revoked access"}})).status,404);
+  const revokedUpload = new FormData(); revokedUpload.set("file",new Blob(["revoked"]),"revoked.txt");
+  assert.equal((await req(revokePath+"/documents",{method:"POST",form:revokedUpload})).status,404);
   await db.user.update({ where: { id: "staff" }, data: { isActive: false } });
   assert.equal(
     (await req("/api/claims", { cookie: cookies.staff })).status,
     401,
   );
   console.log(
-    "PASS: password authentication; role/yacht isolation; director validation; invitation email code through local SMTP; comments/documents visibility; guest upload/download; revocation; inactive users.",
+    "PASS: password authentication; role/yacht isolation; director validation; direct claim links and fixed-sender invitation email through local SMTP; comments/documents visibility; guest upload/download; revocation; inactive users.",
   );
 } finally {
   if (server) {

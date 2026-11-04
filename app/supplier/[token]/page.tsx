@@ -18,6 +18,7 @@ export default function SupplierPortalPage() {
       setData(await r.json());
       setError("");
     } else {
+      setData(null);
       setError(tr("This invitation is unavailable or expired."));
     }
   }

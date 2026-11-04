@@ -20,19 +20,30 @@ export default function ClaimPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((u) => setRole(u?.role || ""))
       .catch(() => {});
+    let active = true;
+    setLoading(true);
+    setData(null);
     fetch(`/api/claims/${params.id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Unable to load claim");
         return res.json();
       })
       .then((json) => {
-        setData(json);
-        setLoading(false);
+        if (active) setData(json);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        if (active) setData(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [params.id]);
 
-  if (loading) return <div className="container">{tr("Loading claim...")}</div>;
+  if (loading || (data && data.claim.id !== params.id))
+    return <div className="container">{tr("Loading claim...")}</div>;
   if (!data) return <div className="container">{tr("Claim not found.")}</div>;
 
   return (
@@ -169,6 +180,7 @@ export default function ClaimPage() {
 
           <div className="section">
             <ClaimActions
+              key={params.id}
               id={params.id}
               claim={data.claim}
               onChange={() => {
@@ -177,8 +189,18 @@ export default function ClaimPage() {
                     if (r.ok) return r.json();
                     throw new Error();
                   })
-                  .then(setData)
-                  .catch(() => setData(null));
+                  .then((refreshed) =>
+                    setData((current: any) =>
+                      current?.claim.id === refreshed.claim.id
+                        ? refreshed
+                        : current,
+                    ),
+                  )
+                  .catch(() =>
+                    setData((current: any) =>
+                      current?.claim.id === params.id ? null : current,
+                    ),
+                  );
               }}
             />
             <h3>{tr("Photos and documents")}</h3>

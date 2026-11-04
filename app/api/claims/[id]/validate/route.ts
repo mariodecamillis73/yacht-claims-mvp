@@ -19,11 +19,29 @@ export async function POST(
       (typeof b.rejectionReason !== "string" || !b.rejectionReason.trim())
     )
       throw new HttpError(400, "Rejection reason required");
+    if (
+      b.updatedAt !== undefined &&
+      (typeof b.updatedAt !== "string" ||
+        !Number.isFinite(Date.parse(b.updatedAt)))
+    )
+      throw new HttpError(400, "Invalid update");
+    if (
+      b.updatedAt &&
+      new Date(b.updatedAt).getTime() !== a.claim.updatedAt.getTime()
+    )
+      throw new HttpError(409, "The claim changed. Refresh and try again");
     const rejected = b.decision === "rejected";
     const c = await db.$transaction(async (tx) => {
       const changed = await tx.claim.updateMany({
-        where: { id: params.id, validationStatus: "pending" },
+        where: {
+          id: params.id,
+          validationStatus: "pending",
+          updatedAt: a.claim.updatedAt,
+        },
         data: {
+          updatedAt: new Date(
+            Math.max(Date.now(), a.claim.updatedAt.getTime() + 1),
+          ),
           validationStatus: b.decision,
           validatedBy: a.actor.id,
           validatedAt: new Date(),

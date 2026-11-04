@@ -1,6 +1,8 @@
 import { translations, Language } from "./i18n";
 // Source-language keys are UI text only. User-authored content is never translated.
 const rows = `
+Reload latest claim|Ricarica il claim aggiornato|Recargar reclamación actualizada|Aktuellen Claim neu laden
+
 Send invitation from aftersales@yyachts.de|Invia invito da aftersales@yyachts.de|Enviar invitación desde aftersales@yyachts.de|Einladung von aftersales@yyachts.de senden
 Invitation email sent from aftersales@yyachts.de|Email di invito inviata da aftersales@yyachts.de|Invitación enviada desde aftersales@yyachts.de|Einladung von aftersales@yyachts.de gesendet
 This personal link opens only this claim. No access code is required.|Questo link personale apre solo questo claim. Non serve alcun codice di accesso.|Este enlace personal abre solo esta reclamación. No se requiere código de acceso.|Dieser persönliche Link öffnet nur diesen Claim. Kein Zugangscode erforderlich.

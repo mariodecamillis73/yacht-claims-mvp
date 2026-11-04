@@ -1006,6 +1006,50 @@ try {
       .closedAt,
     null,
   );
+  const concurrentSnapshot = (
+    await req(`/api/claims/${flowId}`, { cookie: cookies.staff })
+  ).data.claim;
+  const newerClaim = await req(`/api/claims/${flowId}`, {
+    cookie: cookies.director,
+    method: "PATCH",
+    body: {
+      title: "Concurrent update preserved",
+      updatedAt: concurrentSnapshot.updatedAt,
+    },
+  });
+  assert.equal(newerClaim.status, 200);
+  assert.ok(
+    Date.parse(newerClaim.data.updatedAt) >
+      Date.parse(concurrentSnapshot.updatedAt),
+  );
+  const staleSave = await req(`/api/claims/${flowId}`, {
+    cookie: cookies.staff,
+    method: "PATCH",
+    body: {
+      title: "Must not overwrite",
+      updatedAt: concurrentSnapshot.updatedAt,
+    },
+  });
+  assert.equal(staleSave.status, 409);
+  assert.equal(
+    (await req(`/api/claims/${flowId}`, { cookie: cookies.staff })).data.claim
+      .title,
+    "Concurrent update preserved",
+  );
+  const freshSave = await req(`/api/claims/${flowId}`, {
+    cookie: cookies.staff,
+    method: "PATCH",
+    body: {
+      description: "Saved after refresh",
+      updatedAt: newerClaim.data.updatedAt,
+    },
+  });
+  assert.equal(freshSave.status, 200);
+  assert.equal(
+    (await req(`/api/claims/${flowId}`, { cookie: cookies.staff })).data.claim
+      .description,
+    "Saved after refresh",
+  );
   const yachtBefore = (
     await req("/api/yachts/FLOW2", { cookie: cookies.director })
   ).data;
@@ -1088,6 +1132,53 @@ try {
     (await req("/api/yachts/FLOW2", { cookie: cookies.representative })).data
       .documents.length,
     1,
+  );
+  const reviewDraft = await req("/api/claims", {
+    cookie: cookies.staff,
+    method: "POST",
+    body: {
+      yachtHullNumber: "FLOW2",
+      title: "Review current version",
+      description: "Original review text",
+    },
+  });
+  assert.equal(reviewDraft.status, 201);
+  const reviewEdit = await req(`/api/claims/${reviewDraft.data.id}`, {
+    cookie: cookies.staff,
+    method: "PATCH",
+    body: {
+      description: "Changed before director approval",
+      updatedAt: reviewDraft.data.updatedAt,
+    },
+  });
+  assert.equal(reviewEdit.status, 200);
+  assert.equal(
+    (
+      await req(`/api/claims/${reviewDraft.data.id}/validate`, {
+        cookie: cookies.director,
+        method: "POST",
+        body: { decision: "approved", updatedAt: reviewDraft.data.updatedAt },
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await req(`/api/claims/${reviewDraft.data.id}`, {
+        cookie: cookies.director,
+      })
+    ).data.claim.validationStatus,
+    "pending",
+  );
+  assert.equal(
+    (
+      await req(`/api/claims/${reviewDraft.data.id}/validate`, {
+        cookie: cookies.director,
+        method: "POST",
+        body: { decision: "approved", updatedAt: reviewEdit.data.updatedAt },
+      })
+    ).status,
+    200,
   );
   await db.user.update({ where: { id: "staff" }, data: { isActive: false } });
   assert.equal(

@@ -25,7 +25,8 @@ export default function ClaimEditor({
   });
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [saved, setSaved] = useState(false);
+    [saved, setSaved] = useState(false),
+    [conflict, setConflict] = useState(false);
   useEffect(() => {
     setForm({
       title: claim.title || "",
@@ -36,7 +37,7 @@ export default function ClaimEditor({
       warrantyStatus: claim.warrantyStatus || "pending",
       dueDate: claim.dueDate?.slice(0, 10) || "",
     });
-  }, [claim]);
+  }, [claim.id, claim.updatedAt]);
   useEffect(() => {
     Promise.all([fetch("/api/team"), fetch("/api/suppliers")])
       .then(async ([a, b]) => {
@@ -52,19 +53,24 @@ export default function ClaimEditor({
     setBusy(true);
     setError("");
     setSaved(false);
+    setConflict(false);
     try {
       const r = await fetch(`/api/claims/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          updatedAt: claim.updatedAt,
           assignedTo: form.assignedTo || null,
           supplierId: form.supplierId || null,
           dueDate: form.dueDate || null,
         }),
       });
       const b = await r.json();
-      if (!r.ok) throw new Error(b.error);
+      if (!r.ok) {
+        if (r.status === 409) setConflict(true);
+        throw new Error(b.error);
+      }
       setSaved(true);
       onChange();
     } catch (e) {
@@ -78,6 +84,19 @@ export default function ClaimEditor({
       <summary>{t("editClaim")}</summary>
       <form onSubmit={save} className="form-grid">
         {error && <p role="alert">{tr(error)}</p>}
+        {conflict && (
+          <button
+            className="button secondary"
+            type="button"
+            onClick={() => {
+              setConflict(false);
+              setError("");
+              onChange();
+            }}
+          >
+            {tr("Reload latest claim")}
+          </button>
+        )}
         {saved && <p role="status">{t("saved")}</p>}
         <fieldset disabled={busy} className="form-grid">
           <label>

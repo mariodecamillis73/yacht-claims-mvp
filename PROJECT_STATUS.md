@@ -1,3 +1,9 @@
+# Internal acceptance progress — 4 November 2026
+
+Automated internal acceptance completed; [detailed cases and limits](docs/INTERNAL_ACCEPTANCE_2026-11-04.md). Fixed stale claim edits/approvals and detail loading while navigating Prev/Next; newer data is preserved. Source-label checks cover 284 UI labels across EN/IT/ES/DE. Real Microsoft email authorization and full authenticated visual acceptance remain separate. Original prototype and subsequent owner requests remain authoritative.
+
+---
+
 # Owner update — direct claim invitations (4 November 2026)
 
 Supplier/dealer invitations open the single authorized claim directly, with NO login, password, emailed code or OTP step. A 256-bit personal token is stored only as a hash; expiration, revocation and shared/internal filtering are enforced on every request. Existing unrevoked links follow this behavior too. The verification endpoint is retired (410). Guest links do not enable yacht browsing, Prev/Next or internal API access.

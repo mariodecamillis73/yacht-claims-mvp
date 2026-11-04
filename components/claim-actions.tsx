@@ -109,7 +109,10 @@ export default function ClaimActions({
                 disabled={busy || !nextStatus}
                 onClick={() =>
                   run(async () => {
-                    await json(base, "PATCH", { status: nextStatus });
+                    await json(base, "PATCH", {
+                      status: nextStatus,
+                      updatedAt: claim.updatedAt,
+                    });
                   })
                 }
               >
@@ -195,6 +198,7 @@ export default function ClaimActions({
               run(async () => {
                 await json(base + "/validate", "POST", {
                   decision: "approved",
+                  updatedAt: claim.updatedAt,
                 });
               })
             }
@@ -210,6 +214,7 @@ export default function ClaimActions({
               run(async () => {
                 await json(base + "/validate", "POST", {
                   decision: "rejected",
+                  updatedAt: claim.updatedAt,
                   rejectionReason: reason,
                 });
               })

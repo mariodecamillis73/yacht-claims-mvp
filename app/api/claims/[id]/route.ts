@@ -28,6 +28,7 @@ export async function PATCH(
     if (!a.isInternal) throw new HttpError(403, "Not permitted");
     const p = z
       .object({
+        updatedAt: z.string().datetime().optional(),
         title: z.string().trim().min(1).max(250).optional(),
         description: z.string().trim().min(1).max(20000).optional(),
         priority: z.enum(["low", "medium", "high", "critical"]).optional(),
@@ -48,19 +49,26 @@ export async function PATCH(
       .strict()
       .safeParse(await request.json());
     if (!p.success) throw new HttpError(400, "Invalid update");
-    if (!Object.keys(p.data).length)
+    const { updatedAt, ...changes } = p.data;
+    if (
+      updatedAt &&
+      new Date(updatedAt).getTime() !== a.claim.updatedAt.getTime()
+    )
+      throw new HttpError(409, "The claim changed. Refresh and try again");
+    if (!Object.keys(changes).length)
       throw new HttpError(400, "No changes supplied");
     if (
-      p.data.dueDate &&
-      (!Number.isFinite(Date.parse(p.data.dueDate)) ||
-        new Date(p.data.dueDate).toISOString().slice(0, 10) !== p.data.dueDate)
+      changes.dueDate &&
+      (!Number.isFinite(Date.parse(changes.dueDate)) ||
+        new Date(changes.dueDate).toISOString().slice(0, 10) !==
+          changes.dueDate)
     )
       throw new HttpError(400, "Invalid deadline");
     if (
-      p.data.assignedTo &&
+      changes.assignedTo &&
       !(await db.user.findFirst({
         where: {
-          id: p.data.assignedTo,
+          id: changes.assignedTo,
           isActive: true,
           role: { in: ["director", "staff"] },
         },
@@ -68,16 +76,16 @@ export async function PATCH(
     )
       throw new HttpError(400, "Choose an active yard team member");
     if (
-      p.data.supplierId &&
-      !(await db.supplier.findUnique({ where: { id: p.data.supplierId } }))
+      changes.supplierId &&
+      !(await db.supplier.findUnique({ where: { id: changes.supplierId } }))
     )
       throw new HttpError(400, "Supplier not found");
-    if (p.data.status && a.claim.validationStatus !== "approved")
+    if (changes.status && a.claim.validationStatus !== "approved")
       throw new HttpError(409, "Director approval required");
     if (
-      p.data.status &&
+      changes.status &&
       !nextStatuses(a.claim.status, a.claim.validationStatus).includes(
-        p.data.status,
+        changes.status,
       )
     )
       throw new HttpError(409, "This status change is not allowed");
@@ -90,16 +98,19 @@ export async function PATCH(
           status: a.claim.status,
         },
         data: {
-          ...p.data,
-          ...(p.data.dueDate !== undefined
+          ...changes,
+          updatedAt: new Date(
+            Math.max(Date.now(), a.claim.updatedAt.getTime() + 1),
+          ),
+          ...(changes.dueDate !== undefined
             ? {
-                dueDate: p.data.dueDate
-                  ? new Date(p.data.dueDate + "T23:59:59.999Z")
+                dueDate: changes.dueDate
+                  ? new Date(changes.dueDate + "T23:59:59.999Z")
                   : null,
               }
             : {}),
-          ...(p.data.status
-            ? { closedAt: p.data.status === "closed" ? new Date() : null }
+          ...(changes.status
+            ? { closedAt: changes.status === "closed" ? new Date() : null }
             : {}),
         },
       });
@@ -114,10 +125,10 @@ export async function PATCH(
           entityId: params.id,
           claimId: params.id,
           actorId: a.actor.id,
-          action: p.data.status ? "status_changed" : "updated",
-          details: p.data.status
-            ? `${STATUS_LABELS[a.claim.status] || a.claim.status} → ${STATUS_LABELS[p.data.status]}`
-            : "Claim fields updated: " + Object.keys(p.data).join(", "),
+          action: changes.status ? "status_changed" : "updated",
+          details: changes.status
+            ? `${STATUS_LABELS[a.claim.status] || a.claim.status} → ${STATUS_LABELS[changes.status]}`
+            : "Claim fields updated: " + Object.keys(changes).join(", "),
         },
       });
       return claim;

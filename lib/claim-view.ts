@@ -11,6 +11,7 @@ export async function claimView(
       id: true,
       yachtHullNumber: true,
       title: true,
+      yesId: true,
       description: true,
       status: true,
       priority: true,

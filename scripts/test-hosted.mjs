@@ -97,6 +97,7 @@ try {
         "POST",
         {
           yachtHullNumber: "STAGING",
+          yesId: "10001",
           title: "Persist across restarts",
           description: "Test fixture",
         },

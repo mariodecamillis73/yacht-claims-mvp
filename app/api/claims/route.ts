@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import {
@@ -36,6 +37,7 @@ export async function GET(request: Request) {
       select: {
         id: true,
         title: true,
+        yesId: true,
         description: true,
         status: true,
         priority: true,
@@ -93,6 +95,13 @@ export async function POST(request: Request) {
     const parsed = z
       .object({
         yachtHullNumber: z.string().min(1),
+        yesId: z
+          .string()
+          .trim()
+          .regex(/^(?:[1-9]\d{0,8})?$/)
+          .nullable()
+          .optional()
+          .transform((value) => value === "" ? null : value),
         title: z.string().trim().min(1).max(250),
         description: z.string().trim().min(1).max(20000),
         priority: z
@@ -109,6 +118,8 @@ export async function POST(request: Request) {
       }))
     )
       throw new HttpError(404, "Yacht not found");
+    if (!parsed.data.yesId)
+      throw new HttpError(400, "Enter the Request ID assigned in YES");
     const c = await db.$transaction(async (tx) => {
       const claim = await tx.claim.create({
         data: { ...parsed.data, createdBy: u.id },
@@ -127,6 +138,13 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(c, { status: 201 });
   } catch (e) {
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2002" &&
+      Array.isArray(e.meta?.target) &&
+      e.meta.target.includes("yesId")
+    )
+      return fail(new HttpError(409, "YES ID# already assigned"));
     return fail(e);
   }
 }

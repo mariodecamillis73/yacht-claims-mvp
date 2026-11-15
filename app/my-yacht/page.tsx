@@ -53,7 +53,9 @@ export default function MyYacht() {
                 <Link key={c.id} href={`/claims/${c.id}`} className="list-row">
                   <div>
                     <strong>{c.title}</strong>
-                    <div className="muted">{c.id}</div>
+                    <div className="muted">
+                          {c.yesId ? `${tr("YES ID#")} ${c.yesId}` : c.id}
+                        </div>
                   </div>
                   <span className={`badge status-${c.status}`}>
                     {tr(c.status)}

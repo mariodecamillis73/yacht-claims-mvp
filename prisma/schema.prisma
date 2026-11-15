@@ -59,6 +59,7 @@ model Claim {
   updatedAt        DateTime  @updatedAt
   closedAt         DateTime?
   dueDate          DateTime?
+  yesId            String?   @unique
 
   comments     Comment[]
   documents    Document[]

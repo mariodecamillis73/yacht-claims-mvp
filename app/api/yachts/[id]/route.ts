@@ -31,6 +31,7 @@ export async function GET(
           select: {
             id: true,
             title: true,
+            yesId: true,
             status: true,
             priority: true,
             dueDate: true,

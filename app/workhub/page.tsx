@@ -47,7 +47,7 @@ export default function WorkHub() {
       (!status || c.status === status) &&
       (!priority || c.priority === priority) &&
       (!hull || c.yachtHullNumber === hull) &&
-      `${c.title} ${c.description} ${c.id} ${c.yachtHullNumber} ${c.yacht?.name}`
+      `${c.title} ${c.description} ${c.yesId || ""} ${c.id} ${c.yachtHullNumber} ${c.yacht?.name}`
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
@@ -266,7 +266,9 @@ export default function WorkHub() {
                     >
                       <div>
                         <strong>{c.title}</strong>
-                        <div className="muted">{c.id}</div>
+                        <div className="muted">
+                          {c.yesId ? `${tr("YES ID#")} ${c.yesId}` : c.id}
+                        </div>
                         {c.dueDate && (
                           <small>
                             {t("deadline")}:{" "}

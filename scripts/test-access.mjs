@@ -14,6 +14,7 @@ const env = {
   ...process.env,
   DATABASE_URL: url,
   JWT_SECRET: randomBytes(48).toString("hex"),
+  MAIL_PROVIDER: "smtp",
   SMTP_HOST: "127.0.0.1",
   SMTP_PORT: "3526",
   SMTP_USER: "",
@@ -712,6 +713,7 @@ try {
     method: "POST",
     body: {
       yachtHullNumber: "FLOW",
+      yesId: "10001",
       title: "Workflow claim",
       description: "Test description",
       priority: "medium",
@@ -1138,6 +1140,7 @@ try {
     method: "POST",
     body: {
       yachtHullNumber: "FLOW2",
+      yesId: "10002",
       title: "Review current version",
       description: "Original review text",
     },
@@ -1180,7 +1183,7 @@ try {
     ).status,
     200,
   );
-  const raceClaim = await req("/api/claims", {cookie:cookies.staff,method:"POST",body:{yachtHullNumber:"FLOW2",title:"Simultaneous saves",description:"Same revision"}});
+  const raceClaim = await req("/api/claims", {cookie:cookies.staff,method:"POST",body:{yachtHullNumber:"FLOW2",title:"Simultaneous saves",yesId:"10003",description:"Same revision"}});
   assert.equal(raceClaim.status,201);
   const raceSaves = await Promise.all([0,1,2,3].map(index=>req(`/api/claims/${raceClaim.data.id}`,{cookie:index%2 ? cookies.staff : cookies.director,method:"PATCH",body:{title:`Winning edit ${index}`,updatedAt:raceClaim.data.updatedAt}})));
   assert.equal(raceSaves.filter(result=>result.status===200).length,1,JSON.stringify(raceSaves.map(r=>({status:r.status,data:r.data}))));
@@ -1228,6 +1231,29 @@ try {
   assert.equal((await req(revokePath+"/comments",{method:"POST",body:{message:"Revoked access"}})).status,404);
   const revokedUpload = new FormData(); revokedUpload.set("file",new Blob(["revoked"]),"revoked.txt");
   assert.equal((await req(revokePath+"/documents",{method:"POST",form:revokedUpload})).status,404);
+  const yesClaimBody = {
+    yachtHullNumber: "FLOW2",
+    title: "YES ID validation",
+    description: "Test fixture",
+  };
+  const missingYesId = await req("/api/claims", {
+    cookie: cookies.staff,
+    method: "POST",
+    body: yesClaimBody,
+  });
+  assert.equal(missingYesId.status, 400);
+  const duplicateYesId = await req("/api/claims", {
+    cookie: cookies.staff,
+    method: "POST",
+    body: { ...yesClaimBody, yesId: "10001" },
+  });
+  assert.equal(duplicateYesId.status, 409);
+  assert.equal(duplicateYesId.data.error, "YES ID# already assigned");
+  assert.equal(
+    (await req(`/api/claims/${raceClaim.data.id}`, { cookie: cookies.staff })).data.claim.yesId,
+    "10003",
+  );
+  console.log("PASS: required YES ID#, global duplicate rejection and claim readback.");
   await db.user.update({ where: { id: "staff" }, data: { isActive: false } });
   assert.equal(
     (await req("/api/claims", { cookie: cookies.staff })).status,

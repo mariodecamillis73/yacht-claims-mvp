@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { claimAccess, mutation, HttpError, fail } from "@/lib/auth";
@@ -29,6 +30,13 @@ export async function PATCH(
     const p = z
       .object({
         updatedAt: z.string().datetime().optional(),
+        yesId: z
+          .string()
+          .trim()
+          .regex(/^(?:[1-9]\d{0,8})?$/)
+          .nullable()
+          .optional()
+          .transform((value) => value === "" ? null : value),
         title: z.string().trim().min(1).max(250).optional(),
         description: z.string().trim().min(1).max(20000).optional(),
         priority: z.enum(["low", "medium", "high", "critical"]).optional(),
@@ -135,6 +143,13 @@ export async function PATCH(
     });
     return NextResponse.json(c);
   } catch (e) {
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2002" &&
+      Array.isArray(e.meta?.target) &&
+      e.meta.target.includes("yesId")
+    )
+      return fail(new HttpError(409, "YES ID# already assigned"));
     return fail(e);
   }
 }

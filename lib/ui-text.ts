@@ -1,6 +1,9 @@
 import { translations, Language } from "./i18n";
 // Source-language keys are UI text only. User-authored content is never translated.
 const rows = `
+YES ID#|YES ID#|YES ID#|YES ID#
+Enter the Request ID assigned in YES|Inserisci il Request ID assegnato in YES|Introduce el Request ID asignado en YES|Die in YES vergebene Request ID eingeben
+YES ID# already assigned|YES ID# già assegnato|YES ID# ya asignado|YES ID# bereits vergeben
 Invalid document visibility|Visibilità del documento non valida|Visibilidad del documento no válida|Ungültige Dokumentsichtbarkeit
 Reload latest claim|Ricarica il claim aggiornato|Recargar reclamación actualizada|Aktuellen Claim neu laden
 

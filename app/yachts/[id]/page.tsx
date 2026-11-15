@@ -243,7 +243,9 @@ export default function YachtOverviewPage() {
                 >
                   <div>
                     <strong>{claim.title}</strong>
-                    <div className="muted">{claim.id}</div>
+                    <div className="muted">
+                          {claim.yesId ? `${tr("YES ID#")} ${claim.yesId}` : claim.id}
+                        </div>
                   </div>
                   <span className={`badge status-${claim.status}`}>
                     {tr(claim.status)}

@@ -46,7 +46,9 @@ The recipient clicks the link and opens exactly that shared claim without login,
 
 Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` through runtime secrets. Hosted email links use the canonical HTTPS APP_URL. Sender identity is fixed in the application; MAIL_FROM does not override it. External SMTP uses TLS. If the service is absent or rejects the message, the UI reports failure and revokes the newly generated grant instead of claiming delivery. Create access link / Copy link is also available for manual delivery. Anyone holding a valid personal link can access its shared claim until expiry/revocation, as requested by the owner.
 
-Real mailbox delivery still needs an authorized SMTP configuration and commissioning test. Local SMTP integration tests do not send external emails. No mailbox, DNS or Apple Mail settings are changed by this feature.
+For Microsoft 365, register a single-tenant Entra application and grant Exchange Online Application RBAC role `Application Mail.Send` scoped to the `aftersales@yyachts.de` mailbox. Avoid adding an unscoped Entra Graph Mail.Send application permission: it would be additive. Verify the app is in scope for the sender and out of scope for another mailbox. The fixed sender address must be the mailbox user principal name for the Graph endpoint. Set `MAIL_PROVIDER=microsoft-graph`, `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID` and `GRAPH_CLIENT_SECRET` in Render. The secret belongs in the Render environment settings. Graph 202 means Microsoft accepted the submission; verify receipt separately with an authorized test recipient.
+
+Real mailbox delivery still needs an authorized mail configuration and commissioning test. Local SMTP integration tests do not send external emails. No mailbox, DNS or Apple Mail settings are changed by this feature.
 
 ## Validation
 
@@ -78,3 +80,7 @@ Typed dictionaries (`lib/i18n.ts`) and a React provider support EN/IT/ES/DE for 
 Inside the service environment run `npm run db:backup -- /secure/path/new-backup.db`. Destination must be new. SQLite VACUUM INTO creates a consistent snapshot including attachments; integrity/FK checks must pass. Keep a secure copy off disk and establish retention separately. Hosted startup creates a verified same-disk snapshot before pending migrations; this does not replace off-site backups.
 
 `npm run test:backup` verifies restoring a snapshot into a fresh disposable database, including attachment bytes. Operational restore: stop writes/service, preserve current data, restore a verified snapshot into a NEW path, inspect schema/integrity and point compatible application code at it. Never overwrite a running SQLite file. Code rollback does not roll back data. Off-site scheduling and a real recovery exercise remain commissioning work.
+
+### YES ID#
+
+While YES SYSTEM is in use, create the request there first and enter its Request ID when creating the same claim in YY ASM. The field is required for new claims. Existing claims can be linked to their historical YES ID# in the editor. Database uniqueness rejects duplicate IDs across yachts.

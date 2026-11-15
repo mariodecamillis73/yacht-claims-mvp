@@ -69,7 +69,7 @@ export default function ClaimPage() {
             <div>
               <h2>{data.claim.title}</h2>
               <div className="muted">
-                {data.claim.id} •{" "}
+                {data.claim.yesId ? `${tr("YES ID#")} ${data.claim.yesId}` : data.claim.id} •{" "}
                 {tr(STATUS_LABELS[data.claim.status] || data.claim.status)}
               </div>
             </div>

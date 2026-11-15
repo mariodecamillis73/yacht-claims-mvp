@@ -15,6 +15,7 @@ export async function GET(request: Request) {
           select: {
             id: true,
             title: true,
+            yesId: true,
             status: true,
             priority: true,
             updatedAt: true,

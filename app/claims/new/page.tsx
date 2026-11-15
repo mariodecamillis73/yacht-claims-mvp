@@ -20,6 +20,7 @@ export default function NewClaim() {
   const [form, setForm] = useState({
     yachtHullNumber: "",
     title: "",
+    yesId: "",
     description: "",
     priority: "medium",
   });
@@ -152,6 +153,19 @@ export default function NewClaim() {
                   maxLength={250}
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
+                />
+              </label>
+              <label>
+                {tr("YES ID#")}
+                <small className="muted">{tr("Enter the Request ID assigned in YES")}</small>
+                <input
+                  className="input"
+                  required
+                  maxLength={9}
+                  inputMode="numeric"
+                  pattern="[1-9][0-9]{0,8}"
+                  value={form.yesId}
+                  onChange={(e) => setForm({ ...form, yesId: e.target.value })}
                 />
               </label>
               <label>

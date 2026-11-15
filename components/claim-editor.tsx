@@ -16,6 +16,7 @@ export default function ClaimEditor({
     [suppliers, setSuppliers] = useState<any[]>([]);
   const [form, setForm] = useState({
     title: "",
+    yesId: "",
     description: "",
     priority: "medium",
     assignedTo: "",
@@ -30,6 +31,7 @@ export default function ClaimEditor({
   useEffect(() => {
     setForm({
       title: claim.title || "",
+      yesId: claim.yesId || "",
       description: claim.description || "",
       priority: claim.priority,
       assignedTo: claim.assignedTo || "",
@@ -68,7 +70,8 @@ export default function ClaimEditor({
       });
       const b = await r.json();
       if (!r.ok) {
-        if (r.status === 409) setConflict(true);
+        if (r.status === 409 && b.error === "The claim changed. Refresh and try again")
+          setConflict(true);
         throw new Error(b.error);
       }
       setSaved(true);
@@ -107,6 +110,16 @@ export default function ClaimEditor({
               maxLength={250}
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
+            />
+          </label>
+          <label>
+            {tr("YES ID#")}
+            <input
+              className="input"
+              maxLength={9}
+              inputMode="numeric"
+              value={form.yesId}
+              onChange={(e) => setForm({ ...form, yesId: e.target.value })}
             />
           </label>
           <label>

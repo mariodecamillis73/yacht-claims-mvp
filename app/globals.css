@@ -361,7 +361,31 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible {
   outline: 3px solid #93c5fd;
   outline-offset: 3px;
 }
-.input, .select { min-height: 46px; }
+/* Safari's native select can render a shorter visible face than its CSS box. */
+.input, .select { min-height: 48px; }
+select.input, select.select, .input[type="search"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 48px;
+}
+select.input, select.select {
+  padding-block: 0;
+  padding-inline-end: 38px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text) 50%),
+    linear-gradient(135deg, var(--text) 50%, transparent 50%);
+  background-position: right 19px center, right 14px center;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+.workhub-filters > label { justify-content: flex-end; }
+@media (forced-colors: active) {
+  select.input, select.select {
+    -webkit-appearance: auto;
+    appearance: auto;
+    background-image: none;
+  }
+}
 .input, .select, .textarea { min-width: 0; line-height: 1.4; }
 .textarea { resize: vertical; }
 input[type="file"] { max-width: 100%; }

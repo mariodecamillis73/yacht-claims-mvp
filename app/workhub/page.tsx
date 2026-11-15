@@ -117,7 +117,7 @@ export default function WorkHub() {
             </button>
           ))}
         </div>
-        <div className="grid grid-2" style={{ marginTop: 16 }}>
+        <div className="grid grid-2 workhub-filters" style={{ marginTop: 16 }}>
           <label>
             {t("search")}
             <input

@@ -1,5 +1,5 @@
 const nextConfig = {
-  experimental: { typedRoutes: false },
+  typedRoutes: false,
   async headers() {
     return [
       {
@@ -8,6 +8,13 @@ const nextConfig = {
           { key: "Referrer-Policy", value: "no-referrer" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+      {
+        source: "/supplier/:path*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+          { key: "Cache-Control", value: "private, no-store" },
         ],
       },
       {

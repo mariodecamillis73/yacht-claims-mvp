@@ -4,8 +4,9 @@ import { claimView } from "@/lib/claim-view";
 export const dynamic = "force-dynamic";
 export async function GET(
   request: Request,
-  { params }: { params: { token: string } },
+  context: { params: Promise<{ token: string }> },
 ) {
+  const params = await context.params;
   try {
     const g = await guestAccess(request, params.token);
     return NextResponse.json(await claimView(g.claimId, false));

@@ -1,22 +1,33 @@
 import { db } from "./db";
-export async function claimView(id: string, isInternal: boolean) {
+import { claimScope, ClaimActor } from "./claim-scope";
+export async function claimView(
+  id: string,
+  isInternal: boolean,
+  actor?: ClaimActor,
+) {
   const claim = await db.claim.findUnique({
     where: { id },
     select: {
       id: true,
       yachtHullNumber: true,
+      yacht: { select: { name: true, hullNumber: true, deliveryDate: true } },
       title: true,
+      yesId: true,
       description: true,
       status: true,
       priority: true,
       createdAt: true,
       updatedAt: true,
+      closedAt: true,
+      dueDate: true,
       ...(isInternal
         ? {
             warrantyStatus: true,
             validationStatus: true,
             assignedTo: true,
+            supplierId: true,
             validatedBy: true,
+            rejectedReason: true,
           }
         : {}),
     },
@@ -36,11 +47,31 @@ export async function claimView(id: string, isInternal: boolean) {
     },
     orderBy: { createdAt: "asc" },
   });
+  const activity = isInternal
+    ? await db.activityLog.findMany({
+        where: { claimId: id },
+        select: { id: true, action: true, details: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
+      })
+    : [];
+  const neighbors =
+    actor && claim
+      ? await db.claim.findMany({
+          where: await claimScope(actor),
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          select: { id: true },
+        })
+      : [];
+  const index = neighbors.findIndex((item) => item.id === id);
   return {
+    activity,
     claim,
     comments,
     documents,
-    previousClaimId: null,
-    nextClaimId: null,
+    previousClaimId: index > 0 ? neighbors[index - 1].id : null,
+    nextClaimId:
+      index >= 0 && index + 1 < neighbors.length
+        ? neighbors[index + 1].id
+        : null,
   };
 }

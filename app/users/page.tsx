@@ -1,7 +1,16 @@
 "use client";
+import { useLanguage } from "@/components/language-provider";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  isValidPassword,
+  PASSWORD_HELP,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MAX_LENGTH,
+} from "@/lib/password-policy";
 export default function Users() {
+  const { tr, language } = useLanguage();
+
   const [users, setUsers] = useState<any[]>([]);
   const [yachts, setYachts] = useState<any[]>([]);
   const [error, setError] = useState("");
@@ -59,23 +68,34 @@ export default function Users() {
   }
   return (
     <main className="container">
-      <Link href="/workhub">Work Hub</Link>
-      <h1>Users and yacht access</h1>
-      {error && <p role="alert">{error}</p>}
+      <Link href="/workhub">{tr("Work Hub")}</Link>
+      <h1>{tr("Users and yacht access")}</h1>
+      {error && <p role="alert">{tr(error)}</p>}
       {allowed && (
         <>
           <form
             className="section form-grid"
             onSubmit={(e) => {
               e.preventDefault();
+              if (!isValidPassword(form.password)) {
+                setError(PASSWORD_HELP);
+                return;
+              }
               action("/api/users", "POST", form);
             }}
           >
-            <h2>Create account</h2>
+            <h2>{tr("Create account")}</h2>
             {(["firstName", "lastName", "email", "password"] as const).map(
               (key) => (
                 <label key={key}>
-                  {key}
+                  {tr(
+                    {
+                      firstName: "First name",
+                      lastName: "Last name",
+                      email: "Email",
+                      password: "Password",
+                    }[key],
+                  )}
                   <input
                     className="input"
                     required
@@ -87,17 +107,26 @@ export default function Users() {
                           : "text"
                     }
                     autoComplete={key === "password" ? "new-password" : "off"}
-                    minLength={key === "password" ? 16 : 1}
+                    minLength={key === "password" ? PASSWORD_MIN_LENGTH : 1}
+                    maxLength={
+                      key === "password" ? PASSWORD_MAX_LENGTH : undefined
+                    }
+                    aria-describedby={
+                      key === "password" ? "password-help" : undefined
+                    }
                     value={form[key]}
                     onChange={(e) =>
                       setForm({ ...form, [key]: e.target.value })
                     }
                   />
+                  {key === "password" && (
+                    <small id="password-help">{tr(PASSWORD_HELP)}</small>
+                  )}
                 </label>
               ),
             )}
             <label>
-              Role
+              {tr("Role")}
               <select
                 className="input"
                 value={form.role}
@@ -110,13 +139,15 @@ export default function Users() {
                   "supplier",
                   "dealer",
                 ].map((r) => (
-                  <option key={r}>{r}</option>
+                  <option key={r} value={r}>
+                    {tr(r)}
+                  </option>
                 ))}
               </select>
             </label>
             {form.role === "representative" && (
               <fieldset>
-                <legend>Assigned yachts</legend>
+                <legend>{tr("Assigned yachts")}</legend>
                 {yachts.map((y) => (
                   <label key={y.hullNumber}>
                     <input
@@ -137,14 +168,14 @@ export default function Users() {
               </fieldset>
             )}
             <button className="button" disabled={busy}>
-              Create account
+              {tr("Create account")}
             </button>
           </form>
           {users.map((u) => (
             <section className="section" key={u.id}>
               <strong>{u.email}</strong>
               <p>
-                {u.role} · {u.isActive ? "Active" : "Inactive"}
+                {tr(u.role)} · {u.isActive ? tr("Active") : tr("Inactive")}
               </p>
               <button
                 className="button secondary"
@@ -156,11 +187,11 @@ export default function Users() {
                   })
                 }
               >
-                {u.isActive ? "Deactivate" : "Activate"}
+                {u.isActive ? tr("Deactivate") : tr("Activate")}
               </button>
               {u.role === "representative" && (
                 <fieldset>
-                  <legend>Assigned yachts</legend>
+                  <legend>{tr("Assigned yachts")}</legend>
                   {yachts.map((y) => (
                     <label key={y.hullNumber}>
                       <input

@@ -29,6 +29,11 @@ model Yacht {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  deliveryDate DateTime?
+  warrantyYears Int?
+  warrantyExpiresAt DateTime?
+  equipmentJson String @default("{}")
+
   claims Claim[]
 }
 
@@ -53,6 +58,8 @@ model Claim {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   closedAt         DateTime?
+  dueDate          DateTime?
+  yesId            String?   @unique
 
   comments     Comment[]
   documents    Document[]
@@ -152,4 +159,14 @@ model LoginAttempt {
   email String @id
   failures Int @default(0)
   windowStart DateTime @default(now())
+}
+
+model PasswordReset {
+  tokenHash String @id
+  userId String
+  credentialVersion String
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId])
 }

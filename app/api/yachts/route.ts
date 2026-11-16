@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { user, internal, mutation, HttpError, fail } from "@/lib/auth";
-import { z } from "zod";
+import { Prisma } from "@prisma/client";
+import { yachtResponse } from "@/lib/yacht-profile";
+import { yachtInput, yachtData } from "@/lib/yacht-input";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
@@ -20,7 +22,7 @@ export async function GET(request: Request) {
           },
       orderBy: { name: "asc" },
     });
-    return NextResponse.json(rows);
+    return NextResponse.json(rows.map(yachtResponse));
   } catch (e) {
     return fail(e);
   }
@@ -30,20 +32,28 @@ export async function POST(request: Request) {
     mutation(request);
     const u = await user(request);
     if (!internal(u.role)) throw new HttpError(403, "Not permitted");
-    const b = z
-      .object({
-        hullNumber: z.string().min(1).max(50),
-        name: z.string().min(1).max(200),
-        yearBuilt: z.number().int().min(1900).max(2200),
-        ownerId: z.string().min(1),
-        captainName: z.string().max(200),
-      })
-      .safeParse(await request.json());
+    const b = yachtInput.safeParse(await request.json());
     if (!b.success) throw new HttpError(400, "Invalid yacht fields");
-    return NextResponse.json(await db.yacht.create({ data: b.data }), {
-      status: 201,
+    const data = yachtData(b.data);
+    const yacht = await db.$transaction(async (tx) => {
+      const yacht = await tx.yacht.create({ data });
+      await tx.activityLog.create({
+        data: {
+          entityType: "yacht",
+          entityId: yacht.hullNumber,
+          actorId: u.id,
+          action: "created",
+          details: "Yacht registered",
+        },
+      });
+      return yacht;
     });
+    return NextResponse.json(yachtResponse(yacht), { status: 201 });
   } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")
+      return fail(
+        new HttpError(409, "A yacht with this hull number already exists"),
+      );
     return fail(e);
   }
 }

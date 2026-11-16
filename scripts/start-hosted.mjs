@@ -101,6 +101,45 @@ try {
       "First director created. Remove bootstrap variables from hosting configuration.",
     );
   }
+  // Aggregate-only inventory for safe YES migration planning; never log customer records.
+  try {
+    const [yachtProfiles, claimCount, claimWithYesIdCount, commentCount, documentCount] =
+      await Promise.all([
+        db.yacht.findMany({ select: { deliveryDate: true, equipmentJson: true } }),
+        db.claim.count(),
+        db.claim.count({ where: { yesId: { not: null } } }),
+        db.comment.count(),
+        db.document.count(),
+      ]);
+    const isPopulated = (item) =>
+      item && typeof item === "object" &&
+      Object.values(item).some((value) => typeof value === "string" && value.trim().length > 0);
+    const populated = { engine: 0, genset: 0, hullPainting: 0 };
+    for (const yacht of yachtProfiles) {
+      try {
+        const profile = JSON.parse(yacht.equipmentJson || "{}");
+        for (const key of ["engine", "genset"]) {
+          if (isPopulated(profile?.equipment?.[key])) populated[key]++;
+        }
+        if (isPopulated(profile?.painting?.hullPainting)) populated.hullPainting++;
+      } catch {
+        // Malformed legacy profile cannot interrupt an otherwise healthy deployment.
+      }
+    }
+    console.log("YY ASM aggregate inventory: " + JSON.stringify({
+      yachts: yachtProfiles.length,
+      claims: claimCount,
+      claimsWithYesId: claimWithYesIdCount,
+      comments: commentCount,
+      documents: documentCount,
+      yachtsWithDeliveryDate: yachtProfiles.filter((y) => y.deliveryDate !== null).length,
+      yachtsWithEngineData: populated.engine,
+      yachtsWithGensetData: populated.genset,
+      yachtsWithHullPaintData: populated.hullPainting,
+    }));
+  } catch {
+    console.log("YY ASM aggregate inventory unavailable; startup continuing.");
+  }
 } finally {
   await db.$disconnect();
 }

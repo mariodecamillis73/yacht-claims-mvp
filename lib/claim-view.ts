@@ -10,7 +10,7 @@ export async function claimView(
     select: {
       id: true,
       yachtHullNumber: true,
-      yacht: { select: { name: true, hullNumber: true, yearBuilt: true } },
+      yacht: { select: { name: true, hullNumber: true, deliveryDate: true } },
       title: true,
       yesId: true,
       description: true,

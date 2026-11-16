@@ -102,7 +102,10 @@ export default function SupplierPortalPage() {
               <p>
                 <strong>{tr("Hull number")}:</strong> {data.claim.yacht.hullNumber}
                 {" · "}
-                <strong>{tr("Year built")}:</strong> {data.claim.yacht.yearBuilt || "—"}
+                <strong>{tr("Protocol of Delivery date")}:</strong>{" "}
+                {data.claim.yacht.deliveryDate
+                  ? new Date(data.claim.yacht.deliveryDate).toLocaleDateString(language, { timeZone: "UTC" })
+                  : "—"}
               </p>
             </section>
             <h2>{data.claim.title}</h2>

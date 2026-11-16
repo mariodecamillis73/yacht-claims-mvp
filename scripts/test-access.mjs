@@ -445,8 +445,11 @@ try {
   const guest = "";
   const guestNeighbors = (await req(portal)).data;
   assert.deepEqual(guestNeighbors.claim.yacht, {
-    name: "A", hullNumber: "A", yearBuilt: 2026,
+    name: "A", hullNumber: "A", deliveryDate: null,
   });
+  await db.yacht.update({where: {hullNumber: "A"}, data: {deliveryDate: new Date("2026-01-15T00:00:00.000Z")}});
+  assert.equal((await req(portal)).data.claim.yacht.deliveryDate, "2026-01-15T00:00:00.000Z");
+  await db.yacht.update({where: {hullNumber: "A"}, data: {deliveryDate: null}});
   assert.equal(guestNeighbors.claim.yacht.ownerId, undefined);
   assert.equal(guestNeighbors.claim.yacht.captainName, undefined);
   assert.equal(guestNeighbors.previousClaimId, null);

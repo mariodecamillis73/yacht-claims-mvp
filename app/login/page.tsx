@@ -45,10 +45,12 @@ export default function LoginPage() {
   return (
     <div className="container">
       <div className="login-box">
+        <header style={{ textAlign: "center" }}>
         <h1>YY ASM</h1>
         <p className="muted">
-          {tr("Internal operations, customer access and supplier portal")}
+          YYachts After Sales Management
         </p>
+        </header>
 
         <form className="form-grid" onSubmit={handleSubmit}>
           <div>

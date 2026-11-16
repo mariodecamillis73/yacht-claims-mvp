@@ -50,6 +50,7 @@ function sourceFiles(directory) {
 const files = [...sourceFiles("app"), ...sourceFiles("components")];
 const allowed = new Set([
   "YY ASM",
+  "YYachts After Sales Management",
   "#YES ID",
   "Yacht Claims MVP",
   "(UTC)",

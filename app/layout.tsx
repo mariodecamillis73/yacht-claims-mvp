@@ -4,7 +4,7 @@ import LanguageProvider from "@/components/language-provider";
 
 export const metadata: Metadata = {
   title: "YY ASM",
-  description: "Yacht claims management system",
+  description: "YYachts After Sales Management",
 };
 
 export default function RootLayout({

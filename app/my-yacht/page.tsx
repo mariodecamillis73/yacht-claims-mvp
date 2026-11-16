@@ -54,7 +54,7 @@ export default function MyYacht() {
                   <div>
                     <strong>{c.title}</strong>
                     <div className="muted">
-                          {c.yesId ? `${tr("YES ID#")} ${c.yesId}` : c.id}
+                          {tr("#YES ID")} {c.yesId || "—"}
                         </div>
                   </div>
                   <span className={`badge status-${c.status}`}>

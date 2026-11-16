@@ -1,3 +1,8 @@
+## Aggiornamento 16 novembre 2026 — riferimento visibile dei claim
+
+- Centro operativo, schede yacht, dettaglio claim e accesso supplier mostrano solo il numero YES. I codici tecnici interni non sono più usati come riferimento visibile.
+- Per i claim storici senza numero YES viene mostrato un trattino; il numero originale va inserito dalla modifica claim. Nessuna numerazione autonoma viene generata.
+
 # YY ASM — stato operativo
 
 ## Versione verificata su staging

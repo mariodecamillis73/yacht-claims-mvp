@@ -99,7 +99,7 @@ export default function SupplierPortalPage() {
           <>
             <h2>{data.claim.title}</h2>
             <p>
-              {tr(data.claim.status)} · {data.claim.id}
+              {tr(data.claim.status)} · {tr("#YES ID")} {data.claim.yesId || "—"}
             </p>
             <p>{data.claim.description}</p>
             <h3>{tr("Comments")}</h3>

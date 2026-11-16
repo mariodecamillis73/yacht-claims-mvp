@@ -156,7 +156,7 @@ export default function NewClaim() {
                 />
               </label>
               <label>
-                {tr("YES ID#")}
+                {tr("#YES ID")}
                 <small className="muted">{tr("Enter the Request ID assigned in YES")}</small>
                 <input
                   className="input"

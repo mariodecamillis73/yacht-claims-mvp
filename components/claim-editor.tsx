@@ -113,7 +113,7 @@ export default function ClaimEditor({
             />
           </label>
           <label>
-            {tr("YES ID#")}
+            {tr("#YES ID")}
             <input
               className="input"
               maxLength={9}

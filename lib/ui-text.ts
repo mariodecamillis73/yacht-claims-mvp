@@ -1,6 +1,8 @@
 import { translations, Language } from "./i18n";
 // Source-language keys are UI text only. User-authored content is never translated.
 const rows = `
+The server returned an unexpected response. Refresh the page and try again.|Il server ha restituito una risposta inattesa. Aggiorna la pagina e riprova.|El servidor devolvió una respuesta inesperada. Actualiza la página e inténtalo de nuevo.|Der Server hat eine unerwartete Antwort gesendet. Seite neu laden und erneut versuchen.
+
 Sending invitation...|Invio dell'invito in corso…|Enviando invitación…|Einladung wird gesendet…
 Invitation not sent|Invito non inviato|Invitación no enviada|Einladung nicht gesendet
 Accepted by the email service. Delivery to the recipient is not yet confirmed.|Accettato dal servizio email. La consegna al destinatario non è ancora confermata.|Aceptado por el servicio de correo. La entrega al destinatario aún no está confirmada.|Vom E-Mail-Dienst angenommen. Die Zustellung ist noch nicht bestätigt.

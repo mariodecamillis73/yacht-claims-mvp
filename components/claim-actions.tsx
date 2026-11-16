@@ -65,8 +65,9 @@ export default function ClaimActions({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    const b = await r.json();
-    if (!r.ok) throw new Error(b.error);
+    const b = await r.json().catch(() => null);
+    if (!b) throw new Error("The server returned an unexpected response. Refresh the page and try again.");
+    if (!r.ok) throw new Error(b.error || "Unable to complete request");
     return b;
   }
   return (

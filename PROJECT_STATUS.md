@@ -1,3 +1,8 @@
+## Verifica runtime 16 novembre 2026
+
+- Render conferma: nessun provider email configurato; invio reale indisponibile. Non è evidenza di un rifiuto Microsoft.
+- Risposte HTML/non JSON gestite con messaggio comprensibile, senza mostrare eccezioni di parsing.
+
 ## Aggiornamento 16 novembre 2026 — conferma invio inviti
 
 - Stato di invio, errore e conferma accanto al pulsante. La conferma contiene destinatario e ora e appare solo dopo accettazione del servizio email, non prova di consegna.

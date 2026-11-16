@@ -1,6 +1,21 @@
 import { translations, Language } from "./i18n";
 // Source-language keys are UI text only. User-authored content is never translated.
 const rows = `
+Imported from YES|Importato da YES|Importado de YES|Aus YES importiert
+Previous record preserved before YES import|Record precedente conservato prima dell'importazione YES|Registro anterior conservado antes de importar YES|Vorheriger Datensatz vor YES-Import erhalten
+
+Not specified|Non specificato|No especificado|Nicht angegeben
+Import from YES|Importa da YES|Importar desde YES|Aus YES importieren
+Import completed|Importazione completata|Importación completada|Import abgeschlossen
+Preview|Anteprima|Vista previa|Vorschau
+Previous records preserved|Record precedenti conservati|Registros anteriores conservados|Vorherige Datensätze erhalten
+Yacht corrections|Correzioni yacht|Correcciones de yates|Yachtkorrekturen
+YES export|Esportazione YES|Exportación YES|YES-Export
+Invalid file|File non valido|Archivo no válido|Ungültige Datei
+Import in progress…|Importazione in corso…|Importación en curso…|Import läuft…
+YES is the official source. The import preserves original IDs and internal comments. A verified backup is created before changes. No invitations are sent.|YES è la fonte ufficiale. L'importazione conserva gli ID originali e i commenti interni. Prima delle modifiche viene creato un backup verificato. Non vengono inviati inviti.|YES es la fuente oficial. Se conservan los ID originales y los comentarios internos. Se crea una copia de seguridad verificada antes de los cambios. No se envían invitaciones.|YES ist die offizielle Quelle. Original-IDs und interne Kommentare bleiben erhalten. Vor Änderungen wird eine geprüfte Sicherung erstellt. Es werden keine Einladungen gesendet.
+Only explicitly closed YES claims are imported as closed. Original statuses are retained in each description. Warranty approval and warranty duration are not inferred.|Solo i claim esplicitamente chiusi in YES vengono importati come chiusi. Lo stato originale è conservato nella descrizione. Approvazione e durata della garanzia non vengono dedotte.|Solo las reclamaciones cerradas explícitamente en YES se importan como cerradas. El estado original se conserva en la descripción. No se deducen la aprobación ni la duración de la garantía.|Nur ausdrücklich geschlossene YES-Claims werden als geschlossen importiert. Der Originalstatus bleibt in der Beschreibung. Garantieentscheidung und Garantiedauer werden nicht abgeleitet.
+
 The server returned an unexpected response. Refresh the page and try again.|Il server ha restituito una risposta inattesa. Aggiorna la pagina e riprova.|El servidor devolvió una respuesta inesperada. Actualiza la página e inténtalo de nuevo.|Der Server hat eine unerwartete Antwort gesendet. Seite neu laden und erneut versuchen.
 
 Sending invitation...|Invio dell'invito in corso…|Enviando invitación…|Einladung wird gesendet…

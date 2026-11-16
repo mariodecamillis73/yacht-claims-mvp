@@ -83,7 +83,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
           captainName: y.captainName,
           ownerId: y.ownerId,
           deliveryDate: y.deliveryDate?.slice(0, 10) || "",
-          warrantyYears: y.warrantyYears || 2,
+          warrantyYears: y.warrantyYears || 0,
           technicalProfile: profile,
         });
         setRevision(y.updatedAt);
@@ -112,7 +112,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
             ...form,
             ...(editHull ? { updatedAt: revision } : {}),
             deliveryDate: form.deliveryDate || undefined,
-            warrantyYears: form.deliveryDate ? form.warrantyYears : undefined,
+            warrantyYears: form.deliveryDate && form.warrantyYears ? form.warrantyYears : undefined,
           }),
         },
       );
@@ -144,6 +144,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
         <Link href="/workhub">{tr("Work Hub")}</Link>
         <Link href="/my-yacht">{tr("My yachts")}</Link>
         {role === "director" && <Link href="/users">{tr("Users")}</Link>}
+        {role === "director" && <Link href="/admin/import-yes">{tr("Import from YES")}</Link>}
       </nav>
       <div className="section-header">
         <h1>{editHull ? tr("Edit yacht") : tr("Yachts")}</h1>
@@ -244,6 +245,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
                   setForm({ ...form, warrantyYears: Number(e.target.value) })
                 }
               >
+                <option value={0}>{tr("Not specified")}</option>
                 <option value={1}>{tr("1 year")}</option>
                 <option value={2}>{tr("2 years")}</option>
               </select>

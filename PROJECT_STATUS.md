@@ -1,5 +1,19 @@
 ## Verifica runtime 16 novembre 2026
 
+## YES migration preparation — 2026-11-16
+
+- Official source: authenticated YES System export, 39 yachts, 878 unique claims, 2,027 comments/system-history entries. Private source archive saved separately; no customer export is committed to Git.
+- Director-only `/admin/import-yes` previews and imports validated source exports, with a verified SQLite backup before any mutation and a single atomic transaction. Exact-snapshot retries are no-ops; changed snapshots require explicit reconciliation.
+- Original YES IDs, yacht associations, GENERAL delivery date, Engine, Generator and hull paint are retained. Model/slot determines standard hull identifiers; original GENERAL values are retained alongside structured fields. Unknown delivery/technical values and warranty duration are not invented.
+- Existing non-imported records conflicting on YES ID are preserved with their original data in the audit trail; their old grants are revoked before assigning official IDs to new imported records. Yacht identity corrections remove stale representative memberships; original data remains in the verified backup and audit.
+- Imported comments are INTERNAL by default. No invitations are sent. Historical attachment filenames are retained in notes, but binary attachments are NOT part of this export/import.
+- Original YES status/state is retained. Only explicitly Closed maps to closed; Confirmed does not imply a new YY ASM director approval or closure. All imported records require their own YY ASM validation workflow.
+- Delivery dates without a known 1/2-year warranty duration are now supported, including later administrative editing.
+- Verified locally: full-source rehearsal 39/878/2027; idempotency, backup recovery, collision/grant isolation and rollback; production build and access/localization tests.
+- Live import not yet executed at this checkpoint. Do not report live migration complete until the live importer result is verified.
+- Requested follow-up: password recovery from login. Email delivery remains unconfigured, so a password-reset email cannot yet be promised.
+
+
 - Render conferma: nessun provider email configurato; invio reale indisponibile. Non è evidenza di un rifiuto Microsoft.
 - Risposte HTML/non JSON gestite con messaggio comprensibile, senza mostrare eccezioni di parsing.
 

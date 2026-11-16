@@ -16,7 +16,8 @@
     "test:hosted": "node scripts/test-hosted.mjs",
     "db:backup": "node scripts/backup.mjs",
     "test:backup": "node scripts/test-backup.mjs",
-    "test:localization": "node scripts/test-localization.mjs"
+    "test:localization": "node scripts/test-localization.mjs",
+    "test:yes-import": "node scripts/test-yes-import.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.17.0",

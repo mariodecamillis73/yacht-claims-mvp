@@ -1,4 +1,5 @@
 "use client";
+import { yesHistoryDetails } from "@/lib/yes-history";
 import { useLanguage } from "@/components/language-provider";
 
 import Link from "next/link";
@@ -140,12 +141,16 @@ export default function ClaimPage() {
               <section>
                 <h3>{tr("Internal history")}</h3>
                 {data.activity.map((entry: any) => (
-                  <p key={entry.id}>
+                  <p key={entry.id} style={{ whiteSpace: "pre-wrap" }}>
                     <small>
                       {new Date(entry.createdAt).toLocaleString(language)}
                     </small>{" "}
                     ·{" "}
-                    {entry.action === "status_changed"
+                    {entry.action === "Imported from YES"
+                      ? tr("Imported from YES") + "\n" + yesHistoryDetails(entry.details)
+                      : entry.action === "YES import: preserved previous record"
+                      ? tr("Previous record preserved before YES import")
+                      : entry.action === "status_changed"
                       ? entry.details
                           .split(" → ")
                           .map((label: string) => tr(label))

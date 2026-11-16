@@ -201,6 +201,10 @@ try {
     assert.equal(r.status, 200, JSON.stringify(r.data));
     cookies[role] = r.cookie;
   }
+  assert.equal((await req("/api/admin/import-yes", {method:"POST",body:{action:"preview",source:{}}})).status,401);
+  for (const role of ["staff","representative","supplier","dealer"])
+    assert.equal((await req("/api/admin/import-yes", {method:"POST",cookie:cookies[role],body:{action:"preview",source:{}}})).status,403);
+  assert.equal((await req("/api/admin/import-yes", {method:"POST",cookie:cookies.director,body:{action:"preview",source:{}}})).status,400);
   const firstClaim = (await req("/api/claims/A1", { cookie: cookies.director }))
     .data;
   assert.equal(firstClaim.previousClaimId, null);
@@ -679,7 +683,6 @@ try {
     { deliveryDate: "2026-02-30", warrantyYears: 1 },
     { deliveryDate: "2026-01-01", warrantyYears: 3 },
     { warrantyYears: 1 },
-    { deliveryDate: "2026-01-01" },
   ]) {
     assert.equal(
       (
@@ -699,9 +702,14 @@ try {
   });
   assert.equal(leap.status, 201);
   assert.equal(leap.data.warrantyExpiresAt, "2025-02-28T00:00:00.000Z");
+  const deliveryOnly = await req("/api/yachts", {cookie:cookies.staff,method:"POST",body:{...baseYacht,hullNumber:"DELIVERYONLY",deliveryDate:"2024-02-29"}});
+  assert.equal(deliveryOnly.status,201);
+  assert.equal(deliveryOnly.data.deliveryDate,"2024-02-29T00:00:00.000Z");
+  assert.equal(deliveryOnly.data.warrantyYears,null);
+  assert.equal(deliveryOnly.data.warrantyExpiresAt,null);
   // Existing yachts stay readable after the additive migration, with no invented delivery date.
   const legacyRow = await db.yacht.findFirst({
-    where: { hullNumber: { notIn: ["FLOW", "DATE"] } },
+    where: { hullNumber: { notIn: ["FLOW", "DATE", "DELIVERYONLY"] } },
   });
   assert.equal(legacyRow.deliveryDate, null);
   assert.equal(legacyRow.warrantyExpiresAt, null);

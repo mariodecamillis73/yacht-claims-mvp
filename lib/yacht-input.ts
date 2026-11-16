@@ -82,16 +82,13 @@ export function yachtData(input: z.infer<typeof yachtInput>) {
     warrantyYears,
     ...base
   } = input;
-  if (!!deliveryDate !== !!warrantyYears)
-    throw new HttpError(
-      400,
-      "Delivery date and warranty duration must be supplied together",
-    );
-  const expiry = deliveryDate
-    ? warrantyExpiry(deliveryDate, warrantyYears!)
-    : "";
-  if (deliveryDate && !expiry)
+  if (warrantyYears && !deliveryDate)
+    throw new HttpError(400, "Delivery date required for warranty duration");
+  const validDate = deliveryDate ? warrantyExpiry(deliveryDate, 1) : "";
+  if (deliveryDate && !validDate)
     throw new HttpError(400, "Invalid delivery date");
+  const expiry = deliveryDate && warrantyYears
+    ? warrantyExpiry(deliveryDate, warrantyYears) : "";
   return {
     ...base,
     equipmentJson: JSON.stringify(profile || {}),

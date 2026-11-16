@@ -45,7 +45,7 @@ export default function LoginPage() {
   return (
     <div className="container">
       <div className="login-box">
-        <h1>Yacht Claims MVP</h1>
+        <h1>YY ASM</h1>
         <p className="muted">
           {tr("Internal operations, customer access and supplier portal")}
         </p>

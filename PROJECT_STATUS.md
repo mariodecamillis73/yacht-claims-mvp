@@ -1,3 +1,8 @@
+## Aggiornamento 16 novembre 2026 — titolo portale supplier
+
+- Intestazione della pagina e titolo della scheda browser: YY ASM.
+- Prossimo collaudo: invio dal pulsante dedicato a mariodecamillis@gmail.com dal claim di prova #YES ID 930. La consegna reale non è ancora validata.
+
 ## Aggiornamento 16 novembre 2026 — identificazione yacht per supplier
 
 - Il portale del singolo claim mostra nome yacht, numero di scafo e data del Protocol of Delivery (data di consegna registrata), oltre a #YES ID. L’anno di costruzione non viene mostrato nel portale supplier.

@@ -89,7 +89,7 @@ export default function SupplierPortalPage() {
   return (
     <main className="container">
       <div className="section">
-        <h1>{tr("YYachts · Claim access")}</h1>
+        <h1>YY ASM</h1>
         {error && <p role="alert">{tr(error)}</p>}
         {!data ? (
           loading ? (

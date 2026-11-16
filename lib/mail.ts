@@ -9,6 +9,14 @@ export async function sendClaimInvitation(
 ) {
   const subject = "YY ASM — claim invitation";
   const text = `YYachts After Sales has shared a claim with you.\n\nClaim: ${title}\n\nOpen this claim directly, without a password or verification code:\n${url}\n\nThis personal link gives access only to the shared claim and its shared comments, photos and documents.\nValid until ${expiresAt.toISOString().slice(0, 10)} (UTC), unless revoked earlier.\n\nYYachts After Sales\n${CLAIM_SENDER}`;
+  await sendSystemMail(email, subject, text);
+}
+export function emailConfigured() {
+  return process.env.MAIL_PROVIDER === "microsoft-graph"
+    ? !!(process.env.GRAPH_TENANT_ID && process.env.GRAPH_CLIENT_ID && process.env.GRAPH_CLIENT_SECRET)
+    : !!process.env.SMTP_HOST;
+}
+export async function sendSystemMail(email: string, subject: string, text: string) {
   if (process.env.MAIL_PROVIDER === "microsoft-graph") {
     await sendWithMicrosoftGraph(email, subject, text);
     return;

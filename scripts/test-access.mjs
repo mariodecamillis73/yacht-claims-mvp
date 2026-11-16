@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { createServer } from "node:net";
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 const dir = await mkdtemp(join(tmpdir(), "yy-access-"));
@@ -205,6 +205,13 @@ try {
   for (const role of ["staff","representative","supplier","dealer"])
     assert.equal((await req("/api/admin/import-yes", {method:"POST",cookie:cookies[role],body:{action:"preview",source:{}}})).status,403);
   assert.equal((await req("/api/admin/import-yes", {method:"POST",cookie:cookies.director,body:{action:"preview",source:{}}})).status,400);
+  const privateSearch = await req("/api/claims?q=secret%20internal",{cookie:cookies.director});
+  assert.deepEqual(privateSearch.data.map(c=>c.id),["A1"]);
+  assert.equal(privateSearch.data[0].comments[0].message,"secret internal");
+  assert.equal((await req("/api/claims?q=secret%20internal",{cookie:cookies.representative})).data.length,0);
+  assert.deepEqual((await req("/api/claims?q=shared%20note",{cookie:cookies.representative})).data.map(c=>c.id),["A1"]);
+  assert.equal((await req("/api/claims?q=B1",{cookie:cookies.representative})).data.length,0);
+  assert.equal((await req("/api/claims?q="+"x".repeat(201),{cookie:cookies.director})).status,400);
   const firstClaim = (await req("/api/claims/A1", { cookie: cookies.director }))
     .data;
   assert.equal(firstClaim.previousClaimId, null);
@@ -1270,11 +1277,47 @@ try {
     "10003",
   );
   console.log("PASS: required YES ID#, global duplicate rejection and claim readback.");
+  if(process.env.YES_SOURCE_FILE){
+    const source=JSON.parse(await readFile(process.env.YES_SOURCE_FILE,"utf8"));
+    const preview=await req("/api/admin/import-yes",{cookie:cookies.director,method:"POST",body:{action:"preview",source}});
+    assert.equal(preview.status,200,JSON.stringify(preview.data));
+    const imported=await req("/api/admin/import-yes",{cookie:cookies.director,method:"POST",body:{action:"apply",source,digest:preview.data.digest}});
+    assert.equal(imported.status,200,JSON.stringify(imported.data)+log);
+    assert.equal(imported.data.claims,878);assert.equal(imported.data.comments,2027);
+    console.log("PASS: full-source import through production HTTP route");
+  }
   await db.user.update({ where: { id: "staff" }, data: { isActive: false } });
   assert.equal(
     (await req("/api/claims", { cookie: cookies.staff })).status,
     401,
   );
+  const resetMessage = "If an active account exists for this email, you will receive a password reset link.";
+  const unknownReset=await req("/api/auth/forgot-password",{method:"POST",body:{email:"unknown@example.invalid"}});
+  assert.equal(unknownReset.status,200);assert.equal(unknownReset.data.message,resetMessage);
+  const knownReset=await req("/api/auth/forgot-password",{method:"POST",body:{email:"director@example.invalid"}});
+  assert.deepEqual(knownReset.data,unknownReset.data);
+  let resetToken;
+  for(let i=0;i<50&&!resetToken;i++){
+    resetToken=mail.replace(/=\n/g,"").replace(/=3D/g,"=").match(/reset-password#token=([a-f0-9]{64})/)?.[1];
+    if(!resetToken)await new Promise(r=>setTimeout(r,100));
+  }
+  assert.ok(resetToken,"Reset email reaches local SMTP sink");
+  const tokenHash=createHash("sha256").update(resetToken).digest("hex");
+  const tokenRecord=await db.passwordReset.findUnique({where:{tokenHash}});assert.ok(tokenRecord);
+  assert.ok(!JSON.stringify(tokenRecord).includes(resetToken));
+  assert.equal((await req("/api/auth/reset-password",{method:"POST",body:{token:resetToken,password:"Newpass9!",confirmPassword:"wrong"}})).status,400);
+  const resetResponses=await Promise.all([1,2].map(()=>req("/api/auth/reset-password",{method:"POST",body:{token:resetToken,password:"Newpass9!",confirmPassword:"Newpass9!"}})));
+  assert.equal(resetResponses.filter(r=>r.status===200).length,1);
+  assert.equal((await req("/api/auth/me",{cookie:cookies.director})).status,401);
+  assert.equal((await req("/api/auth/login",{method:"POST",body:{email:"director@example.invalid",password:"Newpass9!"}})).status,200);
+  assert.equal((await req("/api/auth/reset-password",{method:"POST",body:{token:resetToken,password:"Otherpass9!",confirmPassword:"Otherpass9!"}})).status,400);
+  const expiredToken=randomBytes(32).toString("hex");const director=await db.user.findUnique({where:{id:"director"}});
+  await db.passwordReset.create({data:{tokenHash:createHash("sha256").update(expiredToken).digest("hex"),userId:"director",credentialVersion:createHash("sha256").update(director.passwordHash).digest("hex"),expiresAt:new Date(Date.now()-1000)}});
+  assert.equal((await req("/api/auth/reset-password",{method:"POST",body:{token:expiredToken,password:"Newpass9!",confirmPassword:"Newpass9!"}})).status,400);
+  assert.equal((await req("/api/auth/forgot-password",{method:"POST",body:{email:"unknown@example.invalid"}})).status,200);
+  assert.equal((await req("/api/auth/forgot-password",{method:"POST",body:{email:"unknown@example.invalid"}})).status,200);
+  assert.equal((await req("/api/auth/forgot-password",{method:"POST",body:{email:"unknown@example.invalid"}})).status,429);
+  console.log("PASS: comment search privacy; password reset mail, hashed expiring single-use token, concurrent redemption, session invalidation and throttling.");
   console.log(
     "PASS: password authentication; role/yacht isolation; director validation; direct claim links and fixed-sender invitation email through local SMTP; comments/documents visibility; guest upload/download; revocation; inactive users.",
   );

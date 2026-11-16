@@ -160,3 +160,13 @@ model LoginAttempt {
   failures Int @default(0)
   windowStart DateTime @default(now())
 }
+
+model PasswordReset {
+  tokenHash String @id
+  userId String
+  credentialVersion String
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId])
+}

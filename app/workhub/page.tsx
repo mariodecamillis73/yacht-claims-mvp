@@ -12,6 +12,8 @@ export default function WorkHub() {
     [status, setStatus] = useState(""),
     [priority, setPriority] = useState(""),
     [hull, setHull] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  useEffect(() => { const timer = setTimeout(() => setSearchQuery(search.trim()), 250); return () => clearTimeout(timer); }, [search]);
   const [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [refresh, setRefresh] = useState(0);
@@ -19,7 +21,7 @@ export default function WorkHub() {
     let active = true;
     setLoading(true);
     setError("");
-    Promise.all([fetch("/api/auth/me"), fetch(`/api/claims?filter=${filter}`)])
+    Promise.all([fetch("/api/auth/me"), fetch(`/api/claims?filter=${filter}&q=${encodeURIComponent(searchQuery)}`)])
       .then(async ([a, b]) => {
         if (!a.ok || !b.ok) throw new Error();
         const [u, rows] = await Promise.all([a.json(), b.json()]);
@@ -40,16 +42,13 @@ export default function WorkHub() {
     return () => {
       active = false;
     };
-  }, [filter, refresh]);
+  }, [filter, refresh, searchQuery]);
   const inside = ["director", "staff"].includes(actor?.role);
   const visible = claims.filter(
     (c) =>
       (!status || c.status === status) &&
       (!priority || c.priority === priority) &&
-      (!hull || c.yachtHullNumber === hull) &&
-      `${c.title} ${c.description} ${c.yesId || ""} ${c.yachtHullNumber} ${c.yacht?.name}`
-        .toLowerCase()
-        .includes(search.toLowerCase()),
+      (!hull || c.yachtHullNumber === hull),
   );
   const grouped: Record<string, any[]> = {};
   for (const claim of visible)
@@ -123,6 +122,8 @@ export default function WorkHub() {
             <input
               className="input"
               type="search"
+              maxLength={200}
+              placeholder={tr("Search claims, comments, yacht names or YES IDs")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -269,6 +270,11 @@ export default function WorkHub() {
                         <div className="muted">
                           {tr("#YES ID")} {c.yesId || "—"}
                         </div>
+                        {c.comments?.map((comment: {message:string;createdAt:string}, i:number) => {
+                          const index=comment.message.toLowerCase().indexOf(searchQuery.toLowerCase());
+                          const start=Math.max(0,index-65);
+                          return <p className="muted" key={i}>{tr("Comment match")}: {start>0?"…":""}{comment.message.slice(start,start+230)}{comment.message.length>start+230?"…":""}</p>;
+                        })}
                         {c.dueDate && (
                           <small>
                             {t("deadline")}:{" "}

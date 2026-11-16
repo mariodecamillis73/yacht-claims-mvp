@@ -2,6 +2,7 @@
 import { useLanguage } from "@/components/language-provider";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -85,6 +86,7 @@ export default function LoginPage() {
             {loading ? tr("Logging in...") : tr("Login")}
           </button>
         </form>
+        <p><Link href="/forgot-password">{tr("Forgot password?")}</Link></p>
 
         <div style={{ marginTop: 16 }} className="muted">
           {tr("Sign in with your assigned account.")}

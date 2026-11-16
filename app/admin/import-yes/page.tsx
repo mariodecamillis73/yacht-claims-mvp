@@ -9,7 +9,7 @@ export default function ImportYes(){
   setBusy(true);setMessage('');
   try{
    const r=await fetch('/api/admin/import-yes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,source,digest})});
-   const b=await r.json();if(!r.ok)throw new Error(b.error||tr('Unable to complete request'));
+   const text=await r.text();let b;try{b=JSON.parse(text)}catch{throw new Error(tr('The server returned an unexpected response. Refresh the page and try again.'))}if(!r.ok)throw new Error(b.error||tr('Unable to complete request'));
    setDigest(b.digest);setDone(b.completed);
    setMessage(`${tr(b.completed?'Import completed':'Preview')}: ${b.yachts} ${tr('Yachts')}, ${b.claims} ${tr('Claims')}, ${b.comments} ${tr('Comments')}. ${tr('Previous records preserved')}: ${b.collisions.length}. ${tr('Yacht corrections')}: ${b.yachtCorrections.length}.`);
   }catch(e){setMessage(e instanceof Error?e.message:tr('Unable to complete request'))}finally{setBusy(false)}

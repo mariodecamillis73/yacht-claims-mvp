@@ -18,6 +18,14 @@ export async function GET(request: Request) {
     const where = await claimScope(u);
     const query = new URL(request.url).searchParams;
     const filter = query.get("filter") || "all";
+    const q = (query.get("q") || "").trim();
+    if (q.length > 200) throw new HttpError(400, "Search text is too long");
+    const commentMatch = {message: {contains: q}, ...(internal(u.role) ? {} : {visibility: "shared"})};
+    const searchWhere: Prisma.ClaimWhereInput = q ? { OR: [
+      { title: { contains: q } }, { description: { contains: q } },
+      { yesId: { contains: q } }, { yachtHullNumber: { contains: q } },
+      { yacht: { name: { contains: q } } }, { comments: { some: commentMatch } },
+    ] } : {};
     if (!["all", "mine", "overdue", "recent"].includes(filter))
       throw new HttpError(400, "Invalid filter");
     const extra =
@@ -32,7 +40,7 @@ export async function GET(request: Request) {
             ? { updatedAt: { gte: new Date(Date.now() - 7 * 86400000) } }
             : {};
     const claims = await db.claim.findMany({
-      where: { AND: [where, extra] },
+      where: { AND: [where, extra, searchWhere] },
       orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
       select: {
         id: true,
@@ -46,6 +54,8 @@ export async function GET(request: Request) {
         updatedAt: true,
         dueDate: true,
         yacht: { select: { name: true } },
+        ...(q ? {comments: {where: commentMatch, orderBy: {createdAt: "desc" as const}, take: 3,
+          select: {message: true, createdAt: true}}} : {}),
         ...(internal(u.role)
           ? {
               validatedBy: true,

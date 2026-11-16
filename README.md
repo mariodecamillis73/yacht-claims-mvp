@@ -15,7 +15,7 @@ Use Node.js 22 or 24 and a persistent SQLite database (single application instan
 
 New accounts created through `/users` require at least 8 characters, including a letter, a number and a non-whitespace special character; uppercase is optional. Passwords are limited to 72 UTF-8 bytes for bcrypt. Existing credentials are not changed by this rule. The browser and server use the same policy.
 
-The director creates other accounts and assigns representatives to yachts at `/users`. Supplier/dealer accounts are optional: a personal invitation link opens its one shared claim directly without an account or code. Account passwords must be delivered through an appropriate private channel; automated account activation/password reset is not implemented yet.
+The director creates other accounts and assigns representatives to yachts at `/users`. Supplier/dealer accounts are optional: a personal invitation link opens its one shared claim directly without an account or code. Account passwords must be delivered through an appropriate private channel; self-service password reset is available from the login page once outgoing email is configured. Reset links expire after 30 minutes, are single-use and invalidate old sessions. Account activation is still administered manually.
 
 ## Existing Mac database
 
@@ -63,7 +63,7 @@ The access test creates a disposable database through migrations and a local SMT
 
 ## Before production deployment
 
-This is a live staging application, not a final production release. The source of truth is [PROJECT_STATUS.md](PROJECT_STATUS.md). Creation, editing, assignment, warranty assessment and status UI are implemented. Remaining commissioning: real SMTP, off-disk scheduled backups, authenticated browser/mobile acceptance and monitoring/domain. Self-service activation/password reset, malware scanning/quotas and full audit coverage are additional hardening. Use a single instance with a persistent disk. Never publish development databases or credentials.
+This is a live staging application, not a final production release. The source of truth is [PROJECT_STATUS.md](PROJECT_STATUS.md). Creation, editing, assignment, warranty assessment and status UI are implemented. Remaining commissioning: real SMTP, off-disk scheduled backups, authenticated browser/mobile acceptance and monitoring/domain. Self-service activation, malware scanning/quotas and full audit coverage are additional hardening. Use a single instance with a persistent disk. Never publish development databases or credentials.
 
 ## Claim management and suppliers
 

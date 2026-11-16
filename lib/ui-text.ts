@@ -1,6 +1,27 @@
 import { translations, Language } from "./i18n";
 // Source-language keys are UI text only. User-authored content is never translated.
 const rows = `
+Forgot password?|Password dimenticata?|¿Olvidaste tu contraseña?|Passwort vergessen?
+Choose a new password|Scegli una nuova password|Elige una nueva contraseña|Neues Passwort wählen
+New password|Nuova password|Nueva contraseña|Neues Passwort
+Confirm password|Conferma password|Confirmar contraseña|Passwort bestätigen
+Please wait…|Attendi…|Espera…|Bitte warten…
+Save new password|Salva nuova password|Guardar nueva contraseña|Neues Passwort speichern
+Send reset link|Invia link di recupero|Enviar enlace de recuperación|Link zum Zurücksetzen senden
+Back to sign in|Torna all'accesso|Volver al inicio de sesión|Zurück zur Anmeldung
+Request a new link|Richiedi un nuovo link|Solicitar un nuevo enlace|Neuen Link anfordern
+Passwords do not match|Le password non coincidono|Las contraseñas no coinciden|Die Passwörter stimmen nicht überein
+Enter a valid email address|Inserisci un indirizzo email valido|Introduce una dirección válida|Gültige E-Mail-Adresse eingeben
+Password recovery is temporarily unavailable. Contact the administrator.|Il recupero password è temporaneamente indisponibile. Contatta l'amministratore.|La recuperación no está disponible temporalmente. Contacta con el administrador.|Die Passwortwiederherstellung ist vorübergehend nicht verfügbar. Administrator kontaktieren.
+Too many reset attempts. Please try again later.|Troppi tentativi di recupero. Riprova più tardi.|Demasiados intentos. Inténtalo más tarde.|Zu viele Versuche. Bitte später erneut versuchen.
+Reset link is invalid or expired. Request a new link.|Il link non è valido o è scaduto. Richiedi un nuovo link.|El enlace no es válido o ha caducado. Solicita uno nuevo.|Der Link ist ungültig oder abgelaufen. Neuen Link anfordern.
+If an active account exists for this email, you will receive a password reset link.|Se esiste un account attivo con questa email, riceverai un link per reimpostare la password.|Si existe una cuenta activa con este correo, recibirás un enlace para restablecer la contraseña.|Falls ein aktives Konto für diese E-Mail existiert, erhältst du einen Link zum Zurücksetzen.
+Password updated. Sign in with your new password.|Password aggiornata. Accedi con la nuova password.|Contraseña actualizada. Inicia sesión con la nueva contraseña.|Passwort aktualisiert. Mit dem neuen Passwort anmelden.
+
+Search claims, comments, yacht names or YES IDs|Cerca nei claim, nei commenti, nei nomi yacht o negli ID YES|Buscar en reclamaciones, comentarios, nombres de yates o ID YES|Claims, Kommentare, Yachtnamen oder YES-IDs durchsuchen
+Comment match|Testo trovato nel commento|Texto encontrado en comentario|Treffer im Kommentar
+Search text is too long|Il testo di ricerca è troppo lungo|El texto de búsqueda es demasiado largo|Der Suchtext ist zu lang
+
 Imported from YES|Importato da YES|Importado de YES|Aus YES importiert
 Previous record preserved before YES import|Record precedente conservato prima dell'importazione YES|Registro anterior conservado antes de importar YES|Vorheriger Datensatz vor YES-Import erhalten
 

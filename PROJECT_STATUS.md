@@ -11,7 +11,11 @@
 - Delivery dates without a known 1/2-year warranty duration are now supported, including later administrative editing.
 - Verified locally: full-source rehearsal 39/878/2027; idempotency, backup recovery, collision/grant isolation and rollback; production build and access/localization tests.
 - Live import not yet executed at this checkpoint. Do not report live migration complete until the live importer result is verified.
-- Requested follow-up: password recovery from login. Email delivery remains unconfigured, so a password-reset email cannot yet be promised.
+- First live apply was interrupted by a service restart; observed Work Hub still showed 4 original records. Optimized to bulk writes and isolated readiness checks from the write transaction. Live retry pending at this checkpoint.
+- Added global Work Hub Search across claim title/description, YES ID, hull/yacht name and authorized comments, with matching comment excerpts. Server-side yacht/grant scope and shared/internal visibility remain enforced.
+- Added Forgot password / Reset password: registered-email delivery, 30-minute hashed single-use tokens, rate limits, atomic concurrent redemption, expiry, credential-version checks and session invalidation. All UI labels in EN/IT/ES/DE. Live email recovery remains unavailable until mail delivery is configured; the UI reports this explicitly.
+- Login branding: centered YY ASM and exact subtitle YYachts After Sales Management.
+- Local production HTTP rehearsal, search privacy, reset email via local SMTP, token replay/race/expiry, old-session invalidation, hosted migration/backup/restart and localization tests passed.
 
 
 - Render conferma: nessun provider email configurato; invio reale indisponibile. Non è evidenza di un rifiuto Microsoft.

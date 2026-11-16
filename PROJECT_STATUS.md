@@ -1,3 +1,8 @@
+## Aggiornamento 16 novembre 2026 — identificazione yacht per supplier
+
+- Il portale del singolo claim mostra nome yacht, numero di scafo e anno di costruzione, oltre a #YES ID.
+- I dati provengono dallo yacht associato al claim; non vengono esposti proprietario, comandante o altri claim.
+
 ## Aggiornamento 16 novembre 2026 — riferimento visibile dei claim
 
 - Centro operativo, schede yacht, dettaglio claim e accesso supplier mostrano solo il numero YES. I codici tecnici interni non sono più usati come riferimento visibile.

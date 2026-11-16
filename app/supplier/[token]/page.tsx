@@ -97,6 +97,14 @@ export default function SupplierPortalPage() {
           ) : null
         ) : (
           <>
+            <section className="section" aria-label={tr("Yacht")}>
+              <h2>{tr("Yacht")}: {data.claim.yacht.name}</h2>
+              <p>
+                <strong>{tr("Hull number")}:</strong> {data.claim.yacht.hullNumber}
+                {" · "}
+                <strong>{tr("Year built")}:</strong> {data.claim.yacht.yearBuilt || "—"}
+              </p>
+            </section>
             <h2>{data.claim.title}</h2>
             <p>
               {tr(data.claim.status)} · {tr("#YES ID")} {data.claim.yesId || "—"}

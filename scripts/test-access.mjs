@@ -444,6 +444,11 @@ try {
   );
   const guest = "";
   const guestNeighbors = (await req(portal)).data;
+  assert.deepEqual(guestNeighbors.claim.yacht, {
+    name: "A", hullNumber: "A", yearBuilt: 2026,
+  });
+  assert.equal(guestNeighbors.claim.yacht.ownerId, undefined);
+  assert.equal(guestNeighbors.claim.yacht.captainName, undefined);
   assert.equal(guestNeighbors.previousClaimId, null);
   assert.equal(guestNeighbors.nextClaimId, null);
   assert.equal(

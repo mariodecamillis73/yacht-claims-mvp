@@ -456,3 +456,6 @@ fieldset label:has(input[type="checkbox"]) { display: flex; align-items: center;
 .invitation-feedback p { margin: .5rem 0 0; }
 .invitation-success { background: #f0fdf4; border-color: #86efac; color: #14532d; }
 .invitation-error { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+
+/* One shared brand/navigation header on every route. */
+.site-header-wrap { padding-bottom: 0; }

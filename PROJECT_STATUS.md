@@ -1,3 +1,15 @@
+## Shared navigation and branding — 16 November 2026
+
+- A single root-layout header shows YY ASM on every route, including loading/error states. Signed-in internal users get Work Hub, Yachts, Suppliers and (director only) Users, plus Logout. Representatives see only their permitted navigation. Login/recovery and supplier-token pages retain the brand without internal navigation.
+- Removed legacy Yacht Claims MVP headings and duplicate page headers. Existing four-language labels and Prev/Next remain.
+- Production build/typecheck and localization passed; live rollout pending at this checkpoint.
+- Continuity instructions and account-transfer guide saved in AGENTS.md and MIGRATION_HANDOFF.md.
+
+## Confirmed YES import — 16 November 2026
+
+- Live importer confirmed 39 yachts, 878 claims and 2,027 comments/history entries at 16:30:25 UTC, after verifying its pre-import backup. Four previous test claims preserved (882 total); two conflicting YES references resolved and three yacht identities corrected.
+- Binary historical attachments were not imported. Email configuration remains outstanding.
+
 ## Verifica runtime 16 novembre 2026
 
 ## YES migration preparation — 2026-11-16
@@ -10,8 +22,8 @@
 - Original YES status/state is retained. Only explicitly Closed maps to closed; Confirmed does not imply a new YY ASM director approval or closure. All imported records require their own YY ASM validation workflow.
 - Delivery dates without a known 1/2-year warranty duration are now supported, including later administrative editing.
 - Verified locally: full-source rehearsal 39/878/2027; idempotency, backup recovery, collision/grant isolation and rollback; production build and access/localization tests.
-- Live import not yet executed at this checkpoint. Do not report live migration complete until the live importer result is verified.
-- First live apply was interrupted by a service restart; observed Work Hub still showed 4 original records. Optimized to bulk writes and isolated readiness checks from the write transaction. Live retry pending at this checkpoint.
+- Preparation checkpoint superseded by the confirmed live import above.
+- First live apply was interrupted by a service restart; observed Work Hub still showed 4 original records. Optimized to bulk writes and isolated readiness checks from the write transaction. Retry subsequently succeeded; see confirmed import above.
 - Added global Work Hub Search across claim title/description, YES ID, hull/yacht name and authorized comments, with matching comment excerpts. Server-side yacht/grant scope and shared/internal visibility remain enforced.
 - Added Forgot password / Reset password: registered-email delivery, 30-minute hashed single-use tokens, rate limits, atomic concurrent redemption, expiry, credential-version checks and session invalidation. All UI labels in EN/IT/ES/DE. Live email recovery remains unavailable until mail delivery is configured; the UI reports this explicitly.
 - Login branding: centered YY ASM and exact subtitle YYachts After Sales Management.

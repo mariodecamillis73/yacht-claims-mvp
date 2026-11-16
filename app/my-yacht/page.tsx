@@ -16,14 +16,7 @@ export default function MyYacht() {
   }, []);
   return (
     <>
-      <div className="topbar">
-        <strong>YY ASM</strong>
-        <nav>
-          <Link href="/my-yacht">{tr("My Yacht")}</Link>
-          <Link href="/workhub">{tr("Work Hub")}</Link>
-          <Link href="/login">{tr("Sign in")}</Link>
-        </nav>
-      </div>
+
       <main className="container page-shell">
         {error && <p role="alert">{tr(error)}</p>}
         {!data && !error && <p>{tr("Loading…")}</p>}

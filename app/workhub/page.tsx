@@ -56,31 +56,7 @@ export default function WorkHub() {
   const label = (value: string) => t(value as TranslationKey) || value;
   return (
     <main className="container page-shell">
-      <header className="topbar">
-        <strong>YY ASM</strong>
-        <nav>
-          <Link href="/workhub">{t("workhub")}</Link>
-          {["director", "staff", "representative"].includes(actor?.role) && (
-            <Link href="/yachts">{t("yachts")}</Link>
-          )}
-          {actor?.role === "representative" && (
-            <Link href="/my-yacht">{t("myYachts")}</Link>
-          )}
-          {inside && <Link href="/suppliers">{t("suppliers")}</Link>}
-          {actor?.role === "director" && (
-            <Link href="/users">{t("users")}</Link>
-          )}
-        </nav>
-        <button
-          className="button secondary"
-          onClick={async () => {
-            await fetch("/api/auth/logout", { method: "POST" });
-            window.location.href = "/login";
-          }}
-        >
-          {t("logout")}
-        </button>
-      </header>
+
       <div className="section-header">
         <h1>{t("workhub")}</h1>
         <div className="inline-actions">

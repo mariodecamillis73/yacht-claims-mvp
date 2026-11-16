@@ -49,20 +49,7 @@ export default function ClaimPage() {
 
   return (
     <>
-      <div className="topbar">
-        <div>Yacht Claims MVP</div>
-        <nav>
-          <Link href="/workhub">{tr("Work Hub")}</Link>
-          {["director", "staff", "representative"].includes(role) && (
-            <Link href={`/yachts/${data.claim.yachtHullNumber}`}>
-              {tr("Yacht Overview")}
-            </Link>
-          )}
-          {role === "representative" && (
-            <Link href="/my-yacht">{tr("My Yacht")}</Link>
-          )}
-        </nav>
-      </div>
+
 
       <div className="container page-shell">
         <div className="section">

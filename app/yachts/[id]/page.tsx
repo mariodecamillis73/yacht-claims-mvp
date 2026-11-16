@@ -38,14 +38,7 @@ export default function YachtOverviewPage() {
 
   return (
     <>
-      <div className="topbar">
-        <div>Yacht Claims MVP</div>
-        <nav>
-          <Link href="/workhub">{tr("Work Hub")}</Link>
-          <Link href={`/yachts/${data.id}`}>{tr("Yacht Overview")}</Link>
-          <Link href="/my-yacht">{tr("My Yacht")}</Link>
-        </nav>
-      </div>
+
 
       <div className="container page-shell">
         <div className="section">

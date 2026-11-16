@@ -1,3 +1,22 @@
+# YY ASM — stato operativo
+
+## Versione verificata su staging
+
+Il commit [`c2551be`](https://github.com/mariodecamillis73/yacht-claims-mvp/commit/c2551bed548f34b58f09c2b483bc511717e7a665) è live su [Render staging](https://yy-asm-staging.onrender.com/login) dal 15 novembre 2026. I [controlli GitHub](https://github.com/mariodecamillis73/yacht-claims-mvp/actions/runs/43695052657) sono passati. Il ramo di lavoro e deploy è `feature/staging-ready`.
+
+- **YES ID#** è obbligatorio per i nuovi claim, ricercabile nel Centro operativo e univoco per tutta la flotta. Durante la coesistenza, si registra il claim in YES SYSTEM e si riporta in YY ASM il Request ID assegnato. Il 15 novembre il massimo osservato in YES era 990. Per i claim già presenti, il personale interno può aggiungere il riferimento dalla schermata di modifica.
+- **Safari.** Pubblicata la correzione che uniforma l'altezza del campo Cerca e dei menu Yacht, Stato e Priorità. Resta da confermare il risultato sulle schermate interne in Safari.
+- **Inviti.** Il link apre direttamente il singolo claim autorizzato, senza login o codici. La creazione e la copia manuale del link sono disponibili. L'invio da **aftersales@yyachts.de** è implementato tramite Microsoft Graph e verificato con risposte simulate. L'invio reale attende l'autorizzazione dell'app Microsoft 365 sulla sola casella After Sales e la configurazione protetta in Render.
+
+## Prossimi passi
+
+1. Ottenere da IT l'autorizzazione Microsoft 365 per l'app YY ASM. Configurare Graph in Render e verificare la ricezione di un invito di prova e l'apertura del solo claim autorizzato.
+2. Completare il collaudo visivo in Safari su Centro operativo, schede yacht e dettaglio claim. Verificare anche le quattro lingue e Prev/Next, secondo il prototipo concordato.
+
+Le note precedenti qui sotto documentano la cronologia. Per inviti e numerazione si applica lo stato operativo sopra.
+
+---
+
 ## Collaudo casi limite — 4 novembre 2026
 
 Superati test automatici su salvataggi e decisioni simultanee, limite allegati di 5 MB, download sicuro di SVG e letture/scritture negate dopo scadenza o revoca dei link. Corretta la visibilità non valida degli allegati (ora rifiutata invece di diventare condivisa) e la gestione delle risposte asincrone/link non più validi nel portale supplier. Build e controllo EN/IT/ES/DE superati. Dettagli e limiti in `docs/INTERNAL_ACCEPTANCE_2026-11-04.md`; collaudo visuale completo e invio Microsoft reale restano da completare.
@@ -36,7 +55,7 @@ This file replaces the accumulated status notes. Historical notes are retained i
 | Claim detail and lifecycle | Create, edit title/description/priority, yard team and supplier assignment, target date, warranty assessment, director approve/reject, status progression, closing/reopening and internal history | Invalid assignments/dates rejected, approval gate enforced, overdue excludes closed/rejected |
 | Yacht overview and technical profile | Create/list/detail/edit yachts, hull correction preserves linked records | Yacht/edit integration tests, duplicate and stale-edit conflict checks |
 | Customer / My Yacht | Real assigned yachts, links to claims, create claims, shared comments and protected files | Representative access tests; no mock substitution |
-| Supplier portal | Specific-email, expiring/revocable per-claim links; guest email-code verification; shared comments and uploads/downloads | Local SMTP integration passes; real delivery requires authorized SMTP configuration |
+| Supplier portal | Specific-email, expiring/revocable direct per-claim links; shared comments and uploads/downloads | Local SMTP integration passes; live Microsoft Graph delivery requires mailbox authorization and Render configuration |
 | Supplier data | Director-maintained supplier directory; yard users can select supplier and responsible team member on a claim | Directory and assignment permissions tested; assignment alone NEVER grants access |
 | Localization-ready structure / Localization roadmap | Typed EN/IT/ES/DE dictionaries, app language selector with local preference, translated Work Hub and primary claim management controls | Build checked. Superseded by prototype alignment: translations are wired across application screens; user-authored text is unchanged |
 | Styling / UX foundation | Existing app styling retained; responsive dashboard and forms | Build verified; complete authenticated browser/mobile acceptance remains pending |

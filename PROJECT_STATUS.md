@@ -2,7 +2,7 @@
 
 - A single root-layout header shows YY ASM on every route, including loading/error states. Signed-in internal users get Work Hub, Yachts, Suppliers and (director only) Users, plus Logout. Representatives see only their permitted navigation. Login/recovery and supplier-token pages retain the brand without internal navigation.
 - Removed legacy Yacht Claims MVP headings and duplicate page headers. Existing four-language labels and Prev/Next remain.
-- Production build/typecheck and localization passed; live rollout pending at this checkpoint.
+- Production build/typecheck, localization and access/isolation tests passed. Commit 7335d0c7e56f83d7466d612ab53a5fdcaeae4633 deployed live at 2026-11-16 16:44:15 UTC (Render deploy dep-dbtj51mk1f9s73crvpgg). Browser verification confirmed the Italian navigation and Logout on importer, yacht list, yacht detail and claim detail; screenshot checked. No legacy MVP branding remains in app/components/lib.
 - Continuity instructions and account-transfer guide saved in AGENTS.md and MIGRATION_HANDOFF.md.
 
 ## Confirmed YES import — 16 November 2026

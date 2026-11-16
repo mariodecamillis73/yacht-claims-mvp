@@ -451,3 +451,8 @@ fieldset label:has(input[type="checkbox"]) { display: flex; align-items: center;
 .action-panel > h3:not(:first-child) { margin-top: 24px; }
 .action-panel > div:has(input[readonly]) { display: grid; gap: 12px; }
 .login-box h1 { margin-bottom: 12px; }
+
+.invitation-feedback { padding: 1rem; border: 1px solid; border-radius: 12px; overflow-wrap: anywhere; }
+.invitation-feedback p { margin: .5rem 0 0; }
+.invitation-success { background: #f0fdf4; border-color: #86efac; color: #14532d; }
+.invitation-error { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }

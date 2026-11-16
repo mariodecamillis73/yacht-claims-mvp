@@ -1,6 +1,10 @@
 import { translations, Language } from "./i18n";
 // Source-language keys are UI text only. User-authored content is never translated.
 const rows = `
+Sending invitation...|Invio dell'invito in corso…|Enviando invitación…|Einladung wird gesendet…
+Invitation not sent|Invito non inviato|Invitación no enviada|Einladung nicht gesendet
+Accepted by the email service. Delivery to the recipient is not yet confirmed.|Accettato dal servizio email. La consegna al destinatario non è ancora confermata.|Aceptado por el servicio de correo. La entrega al destinatario aún no está confirmada.|Vom E-Mail-Dienst angenommen. Die Zustellung ist noch nicht bestätigt.
+
 Protocol of Delivery date|Data del Protocol of Delivery|Fecha del Protocol of Delivery|Datum des Protocol of Delivery
 #YES ID|#YES ID|#YES ID|#YES ID
 Enter the Request ID assigned in YES|Inserisci il Request ID assegnato in YES|Introduce el Request ID asignado en YES|Die in YES vergebene Request ID eingeben

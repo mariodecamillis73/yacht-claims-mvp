@@ -17,6 +17,9 @@ export async function sendClaimInvitation(
     throw new HttpError(503, "Email delivery is not configured");
   const transport = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 30_000,
     port: Number(process.env.SMTP_PORT || 587),
     secure: process.env.SMTP_PORT === "465",
     requireTLS:

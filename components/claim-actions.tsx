@@ -20,6 +20,9 @@ export default function ClaimActions({
   const [shares, setShares] = useState<any[]>([]);
   const [link, setLink] = useState("");
   const [emailSent, setEmailSent] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [sentReceipt, setSentReceipt] = useState<{ email: string; time: string } | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -278,29 +281,47 @@ export default function ClaimActions({
             {tr("Create access link")}
           </button>
           <button
+            type="button"
             className="button"
-            disabled={busy || !email}
-            onClick={() =>
-              run(async () => {
-                setEmailSent(false);
+            disabled={busy || !email.trim()}
+            onClick={async () => {
+              setBusy(true);
+              setSendingEmail(true);
+              setEmailSent(false);
+              setEmailError("");
+              setSentReceipt(null);
+              try {
                 const result = await json(base + "/shares", "POST", {
-                  email,
-                  role: kind,
-                  days,
-                  sendEmail: true,
+                  email: email.trim(), role: kind, days, sendEmail: true,
                 });
+                if (result.emailSent !== true) throw new Error("Unable to send invitation email");
                 setLink(window.location.origin + result.path);
-                setEmailSent(result.emailSent);
-                await loadShares();
-              })
-            }
+                setSentReceipt({ email: result.email, time: new Date().toLocaleString(language) });
+                setEmailSent(true);
+                loadShares().catch(() => {});
+              } catch (e) {
+                setEmailError(e instanceof Error ? e.message : "Unable to send invitation email");
+              } finally {
+                setSendingEmail(false);
+                setBusy(false);
+              }
+            }}
           >
-            {tr("Send invitation from aftersales@yyachts.de")}
+            {tr(sendingEmail ? "Sending invitation..." : "Send invitation from aftersales@yyachts.de")}
           </button>
-          {emailSent && (
-            <p role="status">
-              {tr("Invitation email sent from aftersales@yyachts.de")}
-            </p>
+          {sendingEmail && <p role="status">{tr("Sending invitation...")}</p>}
+          {emailError && (
+            <div className="invitation-feedback invitation-error" role="alert">
+              <strong>{tr("Invitation not sent")}</strong>
+              <p>{tr(emailError)}</p>
+            </div>
+          )}
+          {emailSent && sentReceipt && (
+            <div className="invitation-feedback invitation-success" role="status">
+              <strong>{tr("Invitation email sent from aftersales@yyachts.de")}</strong>
+              <p>{sentReceipt.email} · {sentReceipt.time}</p>
+              <p>{tr("Accepted by the email service. Delivery to the recipient is not yet confirmed.")}</p>
+            </div>
           )}
           {link && (
             <div>

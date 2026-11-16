@@ -104,10 +104,15 @@ try {
 } finally {
   await db.$disconnect();
 }
-if (!process.env.SMTP_HOST) {
-  console.warn(
-    "SMTP not configured: invitation email delivery will remain unavailable.",
-  );
+if (process.env.MAIL_PROVIDER === "microsoft-graph") {
+  const configured = ["GRAPH_TENANT_ID", "GRAPH_CLIENT_ID", "GRAPH_CLIENT_SECRET"].every(key => Boolean(process.env[key]));
+  console.log(configured
+    ? "Invitation email: Microsoft Graph configuration present; delivery requires a real send test."
+    : "Invitation email: Microsoft Graph configuration incomplete; delivery unavailable.");
+} else {
+  console.log(process.env.SMTP_HOST
+    ? "Invitation email: SMTP configuration present; delivery requires a real send test."
+    : "Invitation email: no mail provider configured; delivery unavailable.");
 }
 const app = spawn(
   process.execPath,

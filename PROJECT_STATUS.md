@@ -1,3 +1,9 @@
+## Aggiornamento 16 novembre 2026 — conferma invio inviti
+
+- Stato di invio, errore e conferma accanto al pulsante. La conferma contiene destinatario e ora e appare solo dopo accettazione del servizio email, non prova di consegna.
+- Diagnostica di avvio distingue Graph e SMTP senza esporre credenziali; timeout SMTP per evitare attese indefinite.
+- Consegna reale alla casella di prova ancora da validare.
+
 ## Aggiornamento 16 novembre 2026 — titolo portale supplier
 
 - Intestazione della pagina e titolo della scheda browser: YY ASM.

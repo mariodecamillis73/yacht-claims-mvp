@@ -1,3 +1,7 @@
+## 22 novembre — chiusura claim YES
+
+Lo State YES al 100% determina la chiusura anche per i claim già importati. Restano chiusi anche i claim con status YES Closed.
+
 ## Shared navigation and branding — 16 November 2026
 
 - A single root-layout header shows YY ASM on every route, including loading/error states. Signed-in internal users get Work Hub, Yachts, Suppliers and (director only) Users, plus Logout. Representatives see only their permitted navigation. Login/recovery and supplier-token pages retain the brand without internal navigation.

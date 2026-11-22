@@ -20,7 +20,7 @@ try{
  assert.equal((await db.claim.findUnique({where:{id:'legacy'}})).yesId,null);
  assert.ok((await db.claimGrant.findFirst()).revokedAt);assert.equal(await db.yachtMember.count(),0);
  assert.equal(await db.comment.count(),2);assert.equal((await db.yacht.findFirst()).warrantyYears,null);
- const c=await db.claim.findUnique({where:{id:'yes-claim-930'}});assert.equal(c.status,'in_progress');assert.equal(c.validationStatus,'pending');assert.ok(!c.description.includes('private note'));
+ const c=await db.claim.findUnique({where:{id:'yes-claim-930'}});assert.equal(c.status,'closed');assert.equal(c.validationStatus,'pending');assert.ok(!c.description.includes('private note'));
  snapshot=new PrismaClient({datasources:{db:{url:'file:'+result.backupPath}}});assert.equal((await snapshot.claim.findUnique({where:{id:'legacy'}})).yesId,'930');assert.equal(await snapshot.claim.count(),1);
  assert.ok((await applyYes(db,p,'admin',{databaseUrl:url})).alreadyImported);assert.equal(await db.claim.count(),2);
  const changed=structuredClone(source);changed.details[0].forms[0].fields.find(f=>f.label==='Desc *').value='Changed';await assert.rejects(applyYes(db,normalizeYes(changed),'admin',{databaseUrl:url}),/reconciliation/);

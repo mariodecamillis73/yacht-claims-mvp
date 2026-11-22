@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { user, mutation, HttpError, fail } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { isValidPassword, PASSWORD_HELP } from "@/lib/password-policy";
 export const dynamic = "force-dynamic";
 const fields = {
   id: true,
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
     const p = z
       .object({
         email: z.string().email().max(254),
-        password: z.string().min(16).max(200),
+        password: z.string().refine(isValidPassword, PASSWORD_HELP),
         firstName: z.string().min(1).max(100),
         lastName: z.string().min(1).max(100),
         role,
@@ -62,7 +63,9 @@ export async function POST(request: Request) {
     if (!p.success)
       throw new HttpError(
         400,
-        "Invalid user fields; password must contain at least 16 characters",
+        p.error.issues.some((issue) => issue.path[0] === "password")
+          ? PASSWORD_HELP
+          : "Invalid user fields",
       );
     const { password, yachts, ...data } = p.data;
     data.email = data.email.trim().toLowerCase();

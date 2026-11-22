@@ -3,8 +3,9 @@ import { guestAccess, mutation, fail } from "@/lib/auth";
 import { addComment } from "@/lib/claim-content";
 export async function POST(
   request: Request,
-  { params }: { params: { token: string } },
+  context: { params: Promise<{ token: string }> },
 ) {
+  const params = await context.params;
   try {
     mutation(request);
     const a = await guestAccess(request, params.token);

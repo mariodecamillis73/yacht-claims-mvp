@@ -1,15 +1,23 @@
-import type { Metadata } from 'next';
-import './globals.css';
+import type { Metadata } from "next";
+import "./globals.css";
+import SiteHeader from "@/components/site-header";
+import LanguageProvider from "@/components/language-provider";
 
 export const metadata: Metadata = {
-  title: 'Yacht Claims MVP',
-  description: 'Yacht claims management system'
+  title: "YY ASM",
+  description: "YYachts After Sales Management",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <LanguageProvider><SiteHeader />{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

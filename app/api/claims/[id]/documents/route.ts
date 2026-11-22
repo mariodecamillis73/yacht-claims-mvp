@@ -3,8 +3,9 @@ import { claimAccess, mutation, fail } from "@/lib/auth";
 import { addDocument } from "@/lib/claim-content";
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
+  const params = await context.params;
   try {
     mutation(request);
     const a = await claimAccess(request, params.id);

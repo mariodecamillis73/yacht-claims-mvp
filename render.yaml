@@ -1,0 +1,33 @@
+# Staging environment only. Creating this paid service requires a connected Render account.
+services:
+  - type: web
+    name: yy-asm-staging
+    runtime: node
+    repo: https://github.com/mariodecamillis73/yacht-claims-mvp
+    branch: feature/staging-ready
+    region: frankfurt
+    plan: starter
+    numInstances: 1
+    autoDeployTrigger: "off"
+    buildCommand: npm ci --include=dev && npm run prisma:generate && npm run build && npm prune --omit=dev
+    startCommand: npm run start:hosted
+    healthCheckPath: /api/health
+    disk:
+      name: yy-asm-staging-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: file:/var/data/yy-asm.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        generateValue: true
+# Optional SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASSWORD must be added as runtime secrets.
+# APP_URL is derived from Render's RENDER_EXTERNAL_URL. No production records are imported.

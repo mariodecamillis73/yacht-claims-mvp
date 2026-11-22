@@ -56,8 +56,10 @@ export function fail(error: unknown) {
 }
 export function mutation(request: Request) {
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin)
-    throw new HttpError(403, "Invalid origin");
+  const expected = process.env.APP_URL
+    ? new URL(process.env.APP_URL).origin
+    : new URL(request.url).origin;
+  if (origin && origin !== expected) throw new HttpError(403, "Invalid origin");
 }
 export async function user(request: Request) {
   const token =
@@ -74,6 +76,8 @@ export async function user(request: Request) {
     throw new HttpError(401, "Invalid session");
   const result = await db.user.findUnique({ where: { id: payload.sub } });
   if (!result?.isActive) throw new HttpError(401, "Account unavailable");
+  if (payload.credentialVersion !== hash(result.passwordHash))
+    throw new HttpError(401, "Sign in again after credential update");
   return result;
 }
 export async function yachtAllowed(
@@ -115,15 +119,6 @@ export async function guestAccess(request: Request, token: string) {
   });
   if (!grant || grant.revokedAt || grant.expiresAt <= new Date())
     throw new HttpError(404, "Invitation unavailable");
-  const session = cookie(request, GUEST_COOKIE);
-  let payload: jwt.JwtPayload;
-  try {
-    payload = verifyToken(session || "");
-  } catch {
-    throw new HttpError(401, "Email verification required");
-  }
-  if (payload.kind !== "grant" || payload.sub !== grant.id)
-    throw new HttpError(401, "Email verification required");
   return grant;
 }
 export function sessionCookie(

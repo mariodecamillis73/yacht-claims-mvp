@@ -1,0 +1,4 @@
+ALTER TABLE "Yacht" ADD COLUMN "deliveryDate" DATETIME;
+ALTER TABLE "Yacht" ADD COLUMN "warrantyYears" INTEGER;
+ALTER TABLE "Yacht" ADD COLUMN "warrantyExpiresAt" DATETIME;
+ALTER TABLE "Yacht" ADD COLUMN "equipmentJson" TEXT NOT NULL DEFAULT '{}';

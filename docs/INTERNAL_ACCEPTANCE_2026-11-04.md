@@ -1,0 +1,49 @@
+# YY ASM — internal acceptance checkpoint, 4 November 2026
+
+## Scope
+
+Automated operational tests and source review against the confirmed prototype (Prev/Next and EN/IT/ES/DE), retaining subsequent owner requirements. Tests use disposable databases and a local SMTP sink. No company records or mailboxes are modified; no real supplier messages are sent. Microsoft MFA/Entra is not a prerequisite for these checks.
+
+| Scenario | Result / evidence |
+| --- | --- |
+| Create and edit yacht; duplicate hull; delivery and 1/2-year expiry; leap day; custom fields/units; hull correction with preserved claims and membership | PASS — test:access |
+| Director/staff/representative/supplier/dealer scope and deactivation | PASS — test:access |
+| Create claim, approval/rejection gate, assignment/warranty/deadline, close/reopen, history and scoped dashboard filters | PASS — test:access |
+| Previous/Next first/middle/last and permission boundaries | PASS — test:access |
+| Concurrent claim editing | PASS — newer save preserved, stale editor rejected with 409, refreshed editor can save |
+| Director approving stale content | PASS — stale version cannot approve; approval succeeds after reviewing the current version |
+| Direct claim links without codes, revocation/expiry, shared-only comments/files and isolated yacht documents | PASS — test:access |
+| Fixed invitation sender aftersales@yyachts.de, personal URL in MIME email, failed delivery revokes newly generated link | PASS — local SMTP and hosted tests; real Microsoft sending is not configured |
+| Four-language dictionaries, UI label coverage, placeholders, preservation of user text | PASS — test:localization (284 labels); not a complete visual or linguistic review |
+| Hosted restart, migration snapshot, persistence and unchanged existing credentials | PASS — test:hosted |
+| Consistent backup plus restore of claim and attachment bytes | PASS — test:backup |
+| Production compilation and TypeScript | PASS — local webpack build; remote CI verified separately on publication |
+
+## Corrections from this pass
+
+1. Claim edit, state change and director validation controls submit the version the user viewed. The server rejects stale edits/approvals and guards the transaction against a change during the request. The editor provides a translated reload action.
+2. Prev/Next navigation clears the previous detail, ignores outdated loads and does not let a late action response replace the current claim. Action controls are reset for the new claim. Unrelated re-fetches with the same revision no longer wipe an edit draft.
+3. Supplier portal clears previously displayed details if a subsequent load reports the invitation revoked/expired.
+
+## Still separate from these results
+
+- Full authenticated browser/mobile walkthrough for each role. API and source checks do not establish complete visual acceptance.
+- Restore Microsoft account access and authorize the actual sender service; live invitation delivery and inbox verification remain pending.
+- Commission off-disk scheduled backups/retention, final domain and operational monitoring.
+
+## Edge-case follow-up, 4 November 2026
+
+Automated regression tests passed with disposable records:
+
+- Four simultaneous saves of the same claim version: exactly one succeeds, three return 409, and one update event is recorded. Two simultaneous approval/rejection decisions similarly produce one decision and one history event.
+- Unknown document visibility is rejected with 400 without storing a document; previously it silently became shared.
+- Exactly 5 MB uploads and downloads successfully; 5 MB plus one byte is rejected with 413. SVG content with an image filename is returned as an attachment with application/octet-stream and sandbox CSP.
+- Expired and revoked links reject claim reads, comments and uploads; an expired link also rejects document download.
+
+The supplier page now scopes asynchronous results to the active link and clears displayed claim data when a comment/upload discovers revoked or expired access. This UI change passed TypeScript/build and source review; a complete authenticated browser/mobile acceptance pass remains outstanding. Local test:access and test:localization passed (285 UI labels). The preceding published checkpoint's GitHub CI completed successfully.
+
+## Layout correction pass
+
+Corrected shared layout rules: native buttons and link actions use centered inline-flex content and a consistent minimum height; claim rows within cards use two wrapping columns with the title spanning the row; summary cards fill available columns; grid children can shrink around long translated text and identifiers. Standardized field label spacing, checkbox rows, technical table wrapping, header/navigation wrapping and small-screen padding. Claim action controls now have explicit spacing and full-width explanatory text in the claim editor.
+
+Verification: production build/TypeScript and localization checks; isolated API acceptance tests use disposable data. Browser access to the local preview was blocked, so authenticated visual/mobile acceptance remains outstanding. No email configuration or credentials changed in this pass.

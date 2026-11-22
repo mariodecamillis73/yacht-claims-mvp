@@ -110,7 +110,7 @@ export default function NewClaim() {
   return (
     <main className="container page-shell">
       <nav className="inline-actions">
-        <Link href="/workhub">{tr("Work Hub")}</Link>
+        <Link href="/workhub">Home</Link>
         <Link href="/yachts">{tr("Yachts")}</Link>
       </nav>
       <h1>{tr("New claim")}</h1>

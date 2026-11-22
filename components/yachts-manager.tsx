@@ -141,7 +141,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
   return (
     <main className="container page-shell">
       <nav className="inline-actions">
-        <Link href="/workhub">{tr("Work Hub")}</Link>
+        <Link href="/workhub">Home</Link>
         <Link href="/my-yacht">{tr("My yachts")}</Link>
         {role === "director" && <Link href="/users">{tr("Users")}</Link>}
         {role === "director" && <Link href="/admin/import-yes">{tr("Import from YES")}</Link>}

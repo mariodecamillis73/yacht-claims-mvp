@@ -6,7 +6,7 @@ export const LANGUAGES = {
 } as const;
 export type Language = keyof typeof LANGUAGES;
 const en = {
-  workhub: "Work Hub",
+  workhub: "Home",
   yachts: "Yachts",
   users: "Users",
   suppliers: "Suppliers",
@@ -74,7 +74,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
   en,
   it: {
     ...en,
-    workhub: "Centro operativo",
+    workhub: "Home",
     yachts: "Yacht",
     users: "Utenti",
     suppliers: "Fornitori",
@@ -139,7 +139,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
   },
   es: {
     ...en,
-    workhub: "Centro de trabajo",
+    workhub: "Home",
     yachts: "Yates",
     users: "Usuarios",
     suppliers: "Proveedores",
@@ -203,7 +203,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
   },
   de: {
     ...en,
-    workhub: "Arbeitsübersicht",
+    workhub: "Home",
     yachts: "Yachten",
     users: "Benutzer",
     suppliers: "Lieferanten",

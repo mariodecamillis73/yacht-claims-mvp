@@ -68,7 +68,7 @@ export default function Users() {
   }
   return (
     <main className="container">
-      <Link href="/workhub">{tr("Work Hub")}</Link>
+      <Link href="/workhub">Home</Link>
       <h1>{tr("Users and yacht access")}</h1>
       {error && <p role="alert">{tr(error)}</p>}
       {allowed && (

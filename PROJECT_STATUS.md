@@ -1,3 +1,7 @@
+## Home — 22 novembre
+
+Home in tutte le lingue. La schermata iniziale mostra filtri e contatori. Il selettore apre lo yacht autorizzato e la ricerca esplicita mostra i claim corrispondenti.
+
 ## 22 novembre — chiusura claim YES
 
 Lo State YES al 100% determina la chiusura anche per i claim già importati. Restano chiusi anche i claim con status YES Closed.

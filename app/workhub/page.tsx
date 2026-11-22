@@ -1,17 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/components/language-provider";
 import { TranslationKey } from "@/lib/i18n";
 export default function WorkHub() {
+  const router = useRouter();
+  const [yachts, setYachts] = useState<{ hullNumber: string; name: string }[]>([]);
   const { t, language, tr } = useLanguage();
   const [claims, setClaims] = useState<any[]>([]),
     [actor, setActor] = useState<any>(null);
   const [filter, setFilter] = useState("all"),
     [search, setSearch] = useState(""),
     [status, setStatus] = useState(""),
-    [priority, setPriority] = useState(""),
-    [hull, setHull] = useState("");
+    [priority, setPriority] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   useEffect(() => { const timer = setTimeout(() => setSearchQuery(search.trim()), 250); return () => clearTimeout(timer); }, [search]);
   const [loading, setLoading] = useState(true),
@@ -43,12 +45,18 @@ export default function WorkHub() {
       active = false;
     };
   }, [filter, refresh, searchQuery]);
+  useEffect(() => {
+    if (!["director", "staff", "representative"].includes(actor?.role)) return;
+    fetch("/api/yachts").then(async response => {
+      if (!response.ok) throw new Error();
+      setYachts(await response.json());
+    }).catch(() => setError(t("error")));
+  }, [actor?.role, refresh]);
   const inside = ["director", "staff"].includes(actor?.role);
   const visible = claims.filter(
     (c) =>
       (!status || c.status === status) &&
-      (!priority || c.priority === priority) &&
-      (!hull || c.yachtHullNumber === hull),
+      (!priority || c.priority === priority),
   );
   const grouped: Record<string, any[]> = {};
   for (const claim of visible)
@@ -108,13 +116,13 @@ export default function WorkHub() {
             {t("yachts")}
             <select
               className="input"
-              value={hull}
-              onChange={(e) => setHull(e.target.value)}
+              value=""
+              onChange={(e) => { if (e.target.value) router.push(`/yachts/${encodeURIComponent(e.target.value)}`); }}
             >
               <option value="">{t("any")}</option>
-              {Array.from(new Set(claims.map((c) => c.yachtHullNumber))).map(
-                (h) => (
-                  <option key={h}>{h}</option>
+              {yachts.map(
+                (yacht) => (
+                  <option key={yacht.hullNumber} value={yacht.hullNumber}>{yacht.name} · {yacht.hullNumber}</option>
                 ),
               )}
             </select>
@@ -164,7 +172,6 @@ export default function WorkHub() {
               setSearch("");
               setStatus("");
               setPriority("");
-              setHull("");
               setFilter("all");
             }}
           >
@@ -217,6 +224,7 @@ export default function WorkHub() {
               </strong>
             </div>
           </div>
+          {search.trim() && searchQuery === search.trim() && <>
           {!visible.length && !error && <p>{t("empty")}</p>}
           <div className="grid grid-2">
             {Object.entries(grouped).map(([key, items]) => (
@@ -278,6 +286,7 @@ export default function WorkHub() {
               </section>
             ))}
           </div>
+          </>}
         </>
       )}
     </main>

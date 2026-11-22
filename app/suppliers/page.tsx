@@ -46,7 +46,7 @@ export default function Suppliers() {
   }
   return (
     <main className="container page-shell">
-      <Link href="/workhub">{tr("Work Hub")}</Link>
+      <Link href="/workhub">Home</Link>
       <h1>{tr("Supplier directory")}</h1>
       {error && <p role="alert">{tr(error)}</p>}
       {role === "director" && (

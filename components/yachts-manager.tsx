@@ -18,13 +18,25 @@ type Yacht = {
   deliveryDate?: string;
   warrantyExpiresAt?: string;
 };
+function searchText(value: string) {
+  return value.normalize("NFD").replace(/\p{M}/gu, "").trim().toLowerCase();
+}
+
 export default function YachtsPage({ editHull }: { editHull?: string }) {
-  const { tr, language } = useLanguage();
+  const { t, tr, language } = useLanguage();
 
   const router = useRouter();
   const [revision, setRevision] = useState("");
   const [editReady, setEditReady] = useState(false);
   const [yachts, setYachts] = useState<Yacht[]>([]);
+  const [query, setQuery] = useState("");
+  const [year, setYear] = useState("");
+  const needle = searchText(query);
+  const years = Array.from(new Set(yachts.map(yacht => yacht.yearBuilt))).filter(Boolean).sort((a, b) => b - a);
+  const matches = yachts.filter(yacht =>
+    (!year || String(yacht.yearBuilt) === year) &&
+    (searchText(yacht.name).includes(needle) || searchText(yacht.hullNumber).includes(needle))
+  );
   const [role, setRole] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -156,6 +168,21 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
       </div>
       {error && <p role="alert">{tr(error)}</p>}
       {success && <p role="status">{success}</p>}
+      {!editHull && (
+        <section className="section grid grid-2 workhub-filters">
+          <label>{t("search")}
+            <input type="search" className="input" value={query}
+              placeholder={tr("Yacht name or hull number")}
+              onChange={event => setQuery(event.target.value)} />
+          </label>
+          <label>{tr("Year built")}
+            <select className="input" value={year} onChange={event => setYear(event.target.value)}>
+              <option value="">{t("any")}</option>
+              {years.map(value => <option key={value} value={value}>{value}</option>)}
+            </select>
+          </label>
+        </section>
+      )}
       {editHull && (
         <Link href={`/yachts/${encodeURIComponent(editHull)}`}>
           {tr("Cancel / Back to yacht")}
@@ -477,7 +504,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
         <p>{tr("Loading yachts…")}</p>
       ) : !editHull ? (
         <div className="grid grid-2">
-          {yachts.map((y) => (
+          {matches.map((y) => (
             <section
               className="card"
               style={{ padding: 20 }}
@@ -510,6 +537,7 @@ export default function YachtsPage({ editHull }: { editHull?: string }) {
               </Link>
             </section>
           ))}
+          {yachts.length > 0 && !matches.length && <p role="status">{tr("No matching yachts.")}</p>}
           {!yachts.length && !error && (
             <p>
               {tr(

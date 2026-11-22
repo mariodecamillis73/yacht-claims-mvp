@@ -1,6 +1,8 @@
 import { translations, Language } from "./i18n";
 // Source-language keys are UI text only. User-authored content is never translated.
 const rows = `
+Yacht name or hull number|Nome yacht o numero di scafo|Nombre del yate o número de casco|Yachtname oder Rumpfnummer
+No matching yachts.|Nessuno yacht corrisponde ai filtri.|Ningún yate coincide con los filtros.|Keine Yacht entspricht den Filtern.
 Forgot password?|Password dimenticata?|¿Olvidaste tu contraseña?|Passwort vergessen?
 Choose a new password|Scegli una nuova password|Elige una nueva contraseña|Neues Passwort wählen
 New password|Nuova password|Nueva contraseña|Neues Passwort

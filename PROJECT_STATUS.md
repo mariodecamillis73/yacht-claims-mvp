@@ -1,3 +1,7 @@
+## Date originali e presa visione del Team YY
+
+Le liste mostrano la data di creazione originale. Lo storico YES è escluso dai nuovi arrivi. La prima apertura della scheda da parte di direttore o staff toglie il contrassegno Nuovo per tutto il team.
+
 ## Home — 22 novembre
 
 Home in tutte le lingue. La schermata iniziale mostra filtri e contatori. Il selettore apre lo yacht autorizzato e la ricerca esplicita mostra i claim corrispondenti.

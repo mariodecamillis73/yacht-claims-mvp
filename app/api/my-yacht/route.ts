@@ -18,7 +18,7 @@ export async function GET(request: Request) {
             yesId: true,
             status: true,
             priority: true,
-            updatedAt: true,
+            createdAt: true,
           },
         },
       },

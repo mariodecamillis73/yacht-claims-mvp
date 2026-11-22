@@ -30,7 +30,12 @@ export default function ClaimPage() {
         return res.json();
       })
       .then((json) => {
-        if (active) setData(json);
+        if (active) {
+          setData(json);
+          if (json.claim.teamUnread) {
+            fetch(`/api/claims/${params.id}/read`, { method: "POST" }).catch(() => {});
+          }
+        }
       })
       .catch(() => {
         if (active) setData(null);
@@ -58,7 +63,7 @@ export default function ClaimPage() {
               <h2>{data.claim.title}</h2>
               <div className="muted">
                 {tr("#YES ID")} {data.claim.yesId || "—"} •{" "}
-                {tr(STATUS_LABELS[data.claim.status] || data.claim.status)}
+                {tr(STATUS_LABELS[data.claim.status] || data.claim.status)} · {tr("Creation date")}: {new Date(data.claim.createdAt).toLocaleDateString(language, {timeZone: "UTC"})}
               </div>
             </div>
             <div className="claim-header-actions">

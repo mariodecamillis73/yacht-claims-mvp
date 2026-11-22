@@ -43,6 +43,7 @@ model Claim {
   yacht            Yacht     @relation(fields: [yachtHullNumber], references: [hullNumber])
   title            String
   description      String
+  teamUnread       Boolean   @default(true)
   status           String    @default("new")
   priority         String    @default("medium")
   assignedTo       String?

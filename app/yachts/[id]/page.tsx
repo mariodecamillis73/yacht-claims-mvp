@@ -237,11 +237,11 @@ export default function YachtOverviewPage() {
                   <div>
                     <strong>{claim.title}</strong>
                     <div className="muted">
-                          {tr("#YES ID")} {claim.yesId || "—"}
+                          {tr("#YES ID")} {claim.yesId || "—"} · {new Date(claim.createdAt).toLocaleDateString(language, {timeZone: "UTC"})}
                         </div>
                   </div>
                   <span className={`badge status-${claim.status}`}>
-                    {tr(claim.status)}
+                    {claim.teamUnread && <strong>{tr("New")} · </strong>}{tr(claim.status)}
                   </span>
                   <span className={`badge priority-${claim.priority}`}>
                     {tr(claim.priority)}

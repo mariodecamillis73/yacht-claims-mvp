@@ -59,7 +59,7 @@ export default function WorkHub() {
   const inside = ["director", "staff"].includes(actor?.role);
   const visible = claims.filter(
     (c) =>
-      (!status || (status === "open" ? isOpen(c.status) : c.status === status)) &&
+      (!status || (status === "new" ? c.teamUnread === true : status === "open" ? isOpen(c.status) : c.status === status)) &&
       (!priority || c.priority === priority),
   );
   const grouped: Record<string, any[]> = {};
@@ -141,7 +141,7 @@ export default function WorkHub() {
               <option value="">{t("any")}</option>
               <option value="open">{t("open")}</option>
               {[
-                "new",
+                ...(inside ? ["new"] : []),
                 "assigned",
                 "in_progress",
                 "supplier_pending",
@@ -274,7 +274,7 @@ export default function WorkHub() {
                         )}
                       </div>
                       <span className={`badge status-${c.status}`}>
-                        {label(c.status)}
+                        {c.teamUnread && <strong>{t("new")} · </strong>}{c.status === "new" ? tr("Received") : label(c.status)}
                       </span>
                       <span className={`badge priority-${c.priority}`}>
                         {label(c.priority)}
@@ -283,7 +283,7 @@ export default function WorkHub() {
                         <span>{c.assignedName || t("unassigned")}</span>
                       )}
                       <span className="muted">
-                        {new Date(c.updatedAt).toLocaleDateString(language)}
+                        {new Date(c.createdAt).toLocaleDateString(language, {timeZone: "UTC"})}
                       </span>
                     </Link>
                   ))}

@@ -1,6 +1,8 @@
 import { translations, Language } from "./i18n";
 // Source-language keys are UI text only. User-authored content is never translated.
 const rows = `
+Received|Ricevuto|Recibido|Eingegangen
+Creation date|Data di creazione|Fecha de creación|Erstellungsdatum
 Yacht name or hull number|Nome yacht o numero di scafo|Nombre del yate o número de casco|Yachtname oder Rumpfnummer
 No matching yachts.|Nessuno yacht corrisponde ai filtri.|Ningún yate coincide con los filtros.|Keine Yacht entspricht den Filtern.
 Forgot password?|Password dimenticata?|¿Olvidaste tu contraseña?|Passwort vergessen?
@@ -315,7 +317,7 @@ export function translateText(
     pending: "Pending",
     approved: "Approved",
     rejected: "Rejected",
-    new: "New",
+    new: "Received",
     assigned: "Assigned",
     closed: "Closed",
     low: "Low",

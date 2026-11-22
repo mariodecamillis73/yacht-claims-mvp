@@ -32,6 +32,8 @@ export async function GET(
             id: true,
             title: true,
             yesId: true,
+            createdAt: true,
+            ...(internal(u.role) ? {teamUnread: true} : {}),
             status: true,
             priority: true,
             dueDate: true,

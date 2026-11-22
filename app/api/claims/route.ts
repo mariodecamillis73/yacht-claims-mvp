@@ -58,6 +58,7 @@ export async function GET(request: Request) {
           select: {message: true, createdAt: true}}} : {}),
         ...(internal(u.role)
           ? {
+              teamUnread: true,
               validatedBy: true,
               validationStatus: true,
               assignedTo: true,

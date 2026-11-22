@@ -57,7 +57,7 @@ export default function MyYacht() {
                     {tr(c.priority)}
                   </span>
                   <span className="muted">
-                    {new Date(c.updatedAt).toLocaleDateString(language)}
+                    {new Date(c.createdAt).toLocaleDateString(language, {timeZone: "UTC"})}
                   </span>
                 </Link>
               ))}

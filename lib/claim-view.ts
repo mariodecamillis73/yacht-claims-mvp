@@ -22,6 +22,7 @@ export async function claimView(
       dueDate: true,
       ...(isInternal
         ? {
+            teamUnread: true,
             warrantyStatus: true,
             validationStatus: true,
             assignedTo: true,

@@ -1,5 +1,5 @@
 export const STATUS_LABELS: Record<string, string> = {
-  new: "New",
+  new: "Received",
   assigned: "Assigned",
   in_progress: "In progress",
   supplier_pending: "Waiting for supplier",

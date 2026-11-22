@@ -4,6 +4,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/components/language-provider";
 import { TranslationKey } from "@/lib/i18n";
+function isOpen(status: string) {
+  return !["closed", "rejected"].includes(status);
+}
+
 export default function WorkHub() {
   const router = useRouter();
   const [yachts, setYachts] = useState<{ hullNumber: string; name: string }[]>([]);
@@ -55,7 +59,7 @@ export default function WorkHub() {
   const inside = ["director", "staff"].includes(actor?.role);
   const visible = claims.filter(
     (c) =>
-      (!status || c.status === status) &&
+      (!status || (status === "open" ? isOpen(c.status) : c.status === status)) &&
       (!priority || c.priority === priority),
   );
   const grouped: Record<string, any[]> = {};
@@ -135,6 +139,7 @@ export default function WorkHub() {
               onChange={(e) => setStatus(e.target.value)}
             >
               <option value="">{t("any")}</option>
+              <option value="open">{t("open")}</option>
               {[
                 "new",
                 "assigned",
@@ -205,7 +210,7 @@ export default function WorkHub() {
               <strong>
                 {
                   visible.filter(
-                    (c) => !["closed", "rejected"].includes(c.status),
+                    (c) => isOpen(c.status),
                   ).length
                 }
               </strong>
@@ -218,13 +223,13 @@ export default function WorkHub() {
                     (c) =>
                       c.dueDate &&
                       new Date(c.dueDate) < new Date() &&
-                      !["closed", "rejected"].includes(c.status),
+                      isOpen(c.status),
                   ).length
                 }
               </strong>
             </div>
           </div>
-          {search.trim() && searchQuery === search.trim() && <>
+          {(Boolean(status) || Boolean(search.trim())) && searchQuery === search.trim() && <>
           {!visible.length && !error && <p>{t("empty")}</p>}
           <div className="grid grid-2">
             {Object.entries(grouped).map(([key, items]) => (

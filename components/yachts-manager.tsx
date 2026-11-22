@@ -19,7 +19,7 @@ type Yacht = {
   warrantyExpiresAt?: string;
 };
 function searchText(value: string) {
-  return value.normalize("NFD").replace(/\p{M}/gu, "").trim().toLowerCase();
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
 }
 
 export default function YachtsPage({ editHull }: { editHull?: string }) {
